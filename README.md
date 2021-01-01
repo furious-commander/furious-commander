@@ -4,7 +4,4 @@ This is a testable CLI framework, which uses [yargs](http://yargs.js.org/) and [
 
 ## Install
 
-If you are using [npm](https://www.npmjs.com/), to get the last version:
-
- * `yarn add furious-commander`
- * `npm install furious-commander`
+> `npm install furious-commander`
