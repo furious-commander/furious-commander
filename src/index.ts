@@ -5,7 +5,7 @@ import { isGroupCommand, Command, GroupCommand, LeafCommand } from './command'
 import { IOption, getOption, Option, getExternalOption, ExternalOption } from './option'
 import { IArgument, getArgument, Argument } from './argument';
 
-let yargs = initYargs()
+let yargs = initYargs(process.argv.slice(2))
 
 interface ICli {
   /**
