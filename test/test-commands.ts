@@ -1,6 +1,16 @@
-import { GroupCommand, SubCommand, Argument, ExternalOption, Option } from '../src'
+import { GroupCommand, LeafCommand, Argument, ExternalOption, Option } from '../src'
 
-export class TestCommand8 implements SubCommand {
+export class TestCommand9 implements LeafCommand {
+  public readonly name = 'testCommand9'
+
+  public readonly description = 'This is the testcommand9'
+
+  public run(): void {
+    console.log(`I'm the testCommand ${this.name}`)
+  }
+}
+
+export class TestCommand8 implements LeafCommand {
   public readonly name = 'testCommand8'
 
   public readonly description = 'This is the testcommand8'
@@ -13,7 +23,7 @@ export class TestCommand8 implements SubCommand {
   }
 }
 
-export class TestCommand6 implements SubCommand {
+export class TestCommand6 implements LeafCommand {
   public readonly name = 'testCommand6'
 
   public readonly description = 'This is the testcommand5'
@@ -26,7 +36,7 @@ export class TestCommand6 implements SubCommand {
   }
 }
 
-export class TestCommand5 implements SubCommand {
+export class TestCommand5 implements LeafCommand {
   public readonly name = 'testCommand5'
 
   public readonly description = 'This is the testcommand5'
@@ -36,12 +46,9 @@ export class TestCommand5 implements SubCommand {
   }
 }
 
-export class TestCommand4 implements SubCommand {
+export class TestCommand4 implements LeafCommand {
   @Option({ key: 'option-test-command-4', describe: 'test option for TestCommand4', type: 'boolean' })
   public option1!: boolean
-
-  @ExternalOption('external-option-1')
-  public externalOption1!: string;
 
   @Argument({ key: 'argument123123', describe: 'test argument for TestCommand4', demandOption: true })
   public argument1!: string
@@ -51,7 +58,7 @@ export class TestCommand4 implements SubCommand {
   public readonly description = 'This is the TestCommand4'
 
   public run(): void {
-    console.log(`I'm the testCommand ${this.name} with external-option-1 ${this.externalOption1}`)
+    console.log(`I'm the testCommand ${this.name}`)
     console.log(`option-test-command-4 : ${this.option1}; argument123123: ${this.argument1}`)
   }
 }
