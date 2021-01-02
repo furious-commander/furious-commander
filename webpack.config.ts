@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import Path from 'path'
-import { DefinePlugin, Configuration, WebpackPluginInstance, BannerPlugin } from 'webpack'
+import { DefinePlugin, Configuration, WebpackPluginInstance } from 'webpack'
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer'
 import TerserPlugin from 'terser-webpack-plugin'
 import PackageJson from './package.json'

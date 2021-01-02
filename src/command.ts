@@ -5,7 +5,7 @@ interface BaseCommand {
 }
 
 /**
- * Groups several SubCommands
+ * Groups several LeafCommands
  */
 export interface GroupCommand extends BaseCommand {
   subCommandClasses: { new(): Command }[]
@@ -14,19 +14,19 @@ export interface GroupCommand extends BaseCommand {
 /**
  * CLI Command Classes, which actually do something important
  */
-export interface SubCommand extends BaseCommand {
+export interface LeafCommand extends BaseCommand {
   run(): void
 }
 
 /**
  * Defines the Command classes can implement either Subcommand or GroupCommand
  */
-export type Command = SubCommand | GroupCommand
+export type Command = LeafCommand | GroupCommand
 
 export function isGroupCommand(command: Command): command is GroupCommand {
   return Boolean((command as GroupCommand).subCommandClasses)
 }
 
-export function isSubCommand(command: Command): command is SubCommand {
-  return Boolean((command as SubCommand).run)
+export function isLeafCommand(command: Command): command is LeafCommand {
+  return Boolean((command as LeafCommand).run)
 }

@@ -1,8 +1,11 @@
-import yargs from 'yargs'
+import initYargs from 'yargs/yargs'
+import { Argv } from 'yargs'
 import "reflect-metadata";
-import { isGroupCommand, Command, GroupCommand, SubCommand } from './command'
+import { isGroupCommand, Command, GroupCommand, LeafCommand } from './command'
 import { IOption, getOption, Option, getExternalOption, ExternalOption } from './option'
 import { IArgument, getArgument, Argument } from './argument';
+
+let yargs = initYargs()
 
 interface ICli {
   /**
@@ -123,7 +126,7 @@ class CommandBuilder {
     const _ = yargs.argv
   }
 
-  private initCommandClassYargs(initedCommand: InitedCommand): yargs.Argv {
+  private initCommandClassYargs(initedCommand: InitedCommand): Argv {
     const commandInstance = initedCommand.command
     const commandOptionAndArgumentConfig = getCommandArgumentAndOptionConfig(commandInstance);
     let commandString = `${commandInstance.name}`
@@ -162,7 +165,7 @@ class CommandBuilder {
 
         if(!isGroupCommand(commandInstance)) return yargs;
 
-        let subCommandArgs: yargs.Argv = yargs
+        let subCommandArgs: Argv = yargs
         for(const subCommandInstance of initedCommand.subCommands) {
           subCommandArgs = this.initCommandClassYargs(subCommandInstance)
             .demandCommand(1, 'You need to add one subcommand that listed above')
@@ -186,8 +189,8 @@ class CommandBuilder {
 
     if(isGroupCommand(command)) {
       const subCommandClasses = command.subCommandClasses
-      for(const SubCommandClass of subCommandClasses) {
-        const subCommandClass = this.initCommandClass(SubCommandClass)
+      for(const LeafCommandClass of subCommandClasses) {
+        const subCommandClass = this.initCommandClass(LeafCommandClass)
         subCommands.push(subCommandClass)
       }
     }
@@ -205,6 +208,7 @@ export function cli(options: ICli): CommandBuilder {
   const { rootCommandClasses, optionParameters } = options
 
   if(options.testArguments) {
+    yargs = initYargs()
     yargs.parse(options.testArguments)
 
     yargs.exitProcess(false)
@@ -218,5 +222,5 @@ export function cli(options: ICli): CommandBuilder {
   return new CommandBuilder(rootCommandClasses)
 }
 
-export { GroupCommand, SubCommand, Argument, ExternalOption, Option }
+export { GroupCommand, LeafCommand, Argument, ExternalOption, Option }
 export default cli;
