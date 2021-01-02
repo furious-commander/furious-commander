@@ -5,6 +5,9 @@ export class TestCommand9 implements LeafCommand {
 
   public readonly description = 'This is the testcommand9'
 
+  @ExternalOption('option-test-command-3')
+  public optionTestCommand3!: string
+
   public run(): void {
     console.log(`I'm the testCommand ${this.name}`)
   }
@@ -65,9 +68,13 @@ export class TestCommand4 implements LeafCommand {
 
 export class TestCommand3 implements GroupCommand {
   public readonly name = 'testCommand3'
-  public subCommandClasses = [TestCommand4, TestCommand6]
+
+  public subCommandClasses = [TestCommand4, TestCommand9]
 
   public readonly description = 'This is the testCommand3'
+
+  @Option({ key: 'option-test-command-3', describe: 'option1 key for testCommand3' })
+  public option1!: string
 }
 
 export class TestCommand implements GroupCommand {

@@ -1,5 +1,5 @@
 import cli from '../src'
-import { TestCommand4, TestCommand6, TestCommand8, TestCommand9 } from './test-commands'
+import { TestCommand, TestCommand4, TestCommand6, TestCommand8, TestCommand9 } from './test-commands'
 
 describe('Test Command classes', () => {
   let consoleMessages: string[] = []
@@ -53,7 +53,7 @@ describe('Test Command classes', () => {
     expect(command.argument1).toBe(commandArgumentValue)
   })
 
-  it('should set externally defined cli option default value to Command\'s instance field', () => {
+  it('should set externally defined cli option default value to Command instance\'s field', () => {
     const optionValue = 'http://obeying-service.local'
     const optionKey = 'api-url'
     const commandBuilder = cli({
@@ -73,7 +73,7 @@ describe('Test Command classes', () => {
   })
 
   it('should set passed externally defined cli option value to Command instance\'s field', () => {
-    const optionValue = 'http://obeying-service.local'
+    const optionValue = 'http://obedient-service.local'
     const optionKey = 'api-url'
     const commandBuilder = cli({
       rootCommandClasses: [TestCommand6],
@@ -88,5 +88,25 @@ describe('Test Command classes', () => {
     const command: TestCommand6 = commandBuilder.initedCommands[0].command as TestCommand6
 
     expect(command.apiUrl).toBe(optionValue)
+  })
+
+  it('should use GroupCommand and call one of its LeafCommand (depth: 3)', () => {
+    //also use alias of the rootCommand
+    //also fetch parent command option in leaf command
+    const testCommand3OptionValue = 'BUT DO LIKE IN OTHER WAY NOW!'
+    const testCommand3OptionKey = 'option-test-command-3'
+    const leafCommandName = 'testCommand9'
+    const commandBuilder = cli({
+      rootCommandClasses: [TestCommand],
+      testArguments: [ 'tst', `testCommand3`, leafCommandName, `--${testCommand3OptionKey}`, testCommand3OptionValue ],
+    })
+    const command: TestCommand9 = commandBuilder
+      .initedCommands[0]
+      .subCommands[0]
+      .subCommands[1]
+      .command as TestCommand9
+
+      expect(consoleMessages[0]).toBe(`I'm the testCommand ${leafCommandName}`)
+      expect(command.optionTestCommand3).toBe(testCommand3OptionValue)
   })
 })
