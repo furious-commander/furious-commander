@@ -21,25 +21,44 @@ An example of a leaf command:
 ```ts
 import { Option, ExternalOption, Argument, LeafCommand } from 'furious-commander'
 
-export class TestCommand implements LeafCommand {
+export class TestLeafCommand implements LeafCommand {
   public readonly name = 'testCommand'
 
   public readonly description = 'This is a testcommand'
 
-  @Option({ key: 'option-test-command-1', describe: 'Test option 1 for testCommand' })
+  @Option({ key: 'option-test-command-1', describe: 'Test option 1 for TestLeafCommand' })
   public option1!: string
 
-  @Argument({ key: 'argument-1', describe: 'test argument for testCommand', demandOption: true })
+  @Argument({ key: 'argument-1', describe: 'test argument for TestLeafCommand', demandOption: true })
   public argument1!: string
 
   @ExternalOption('api-url')
   public apiUrl!: string
+
+  @ExternalOption('group-option-1')
+  public groupOption!: string
 
   public run(): void {
     console.log(`I'm ${this.name}. option-test-command-1: ${this.option1}.`)
     console.log(' I COMMAND!!!!!4!')
     // (...)
   }
+}
+```
+
+and a group command:
+```ts
+import { Option, ExternalOption, Argument, LeafCommand } from 'furious-commander'
+
+export class TestGroupCommand implements GroupCommand {
+  public readonly name = 'testGroupCommand'
+
+  public subCommandClasses = [TestLeafCommand]
+
+  public readonly description = 'This is a GroupCommand'
+
+  @Option({ key: 'group-option-1', describe: 'Test option 1 for export class TestGroupCommand' })
+  public option1!: string
 }
 ```
 
@@ -79,3 +98,8 @@ In order to use decorators in your project (until it's not available in vanilla 
 
 For babel use `@babel/plugin-proposal-decorators` (suggested with `legacy: true`) followed by `@babel/plugin-proposal-class-properties` plugins.
 
+## Test
+
+```sh
+ $ npm run test
+```
