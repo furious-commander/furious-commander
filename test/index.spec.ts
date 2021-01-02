@@ -53,7 +53,7 @@ describe('Test Command classes', () => {
     expect(command.argument1).toBe(commandArgumentValue)
   })
 
-  it('should set externally defined cli option default value to Command\'s instance field', () => {
+  it('should set externally defined cli option default value to Command instance\'s field', () => {
     const optionValue = 'http://obeying-service.local'
     const optionKey = 'api-url'
     const commandBuilder = cli({

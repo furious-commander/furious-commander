@@ -1,6 +1,6 @@
 # Furious Commander
 
-This is a testable CLI framework, which uses [yargs](http://yargs.js.org/) and [decorators](https://www.typescriptlang.org/docs/handbook/decorators.html). It supports LeafCommands in any depth and provides decorators to easily define and use CLI `arguments` and `options`.
+This is a testable CLI framework, which uses [yargs](http://yargs.js.org/) and [decorators](https://www.typescriptlang.org/docs/handbook/decorators.html). It supports commands in any depth and provides decorators to easily define and use CLI `arguments` and `options`.
 
 ## Install
 
