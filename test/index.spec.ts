@@ -73,7 +73,7 @@ describe('Test Command classes', () => {
   })
 
   it('should set passed externally defined cli option value to Command instance\'s field', () => {
-    const optionValue = 'http://obeying-service.local'
+    const optionValue = 'http://obedient-service.local'
     const optionKey = 'api-url'
     const commandBuilder = cli({
       rootCommandClasses: [TestCommand6],
