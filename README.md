@@ -48,7 +48,7 @@ export class TestLeafCommand implements LeafCommand {
 
 and a group command:
 ```ts
-import { Option, ExternalOption, Argument, LeafCommand } from 'furious-commander'
+import { Option, ExternalOption, Argument, GroupCommand } from 'furious-commander'
 
 export class TestGroupCommand implements GroupCommand {
   public readonly name = 'testGroupCommand'
@@ -70,7 +70,7 @@ example for `cli` method call with the command class above:
 
 ```ts
 const commandBuilder = cli({
-  rootCommandClasses: [TestCommand],
+  rootCommandClasses: [TestGroupCommand],
   optionParameters: [
     {
       key: 'api-url',
