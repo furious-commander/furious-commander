@@ -4,6 +4,7 @@ import "reflect-metadata";
 import { isGroupCommand, Command, GroupCommand, LeafCommand } from './command'
 import { IOption, getOption, Option, getExternalOption, ExternalOption } from './option'
 import { IArgument, getArgument, Argument } from './argument';
+import { types } from 'util'
 
 let yargs = initYargs(process.argv.slice(2))
 
@@ -123,7 +124,7 @@ class CommandBuilder {
       this.initCommandClassYargs(initedCommand)
     }
 
-    const _ = yargs.argv
+    // const _ = yargs.argv
   }
 
   private initCommandClassYargs(initedCommand: InitedCommand): Argv {
@@ -173,10 +174,14 @@ class CommandBuilder {
 
         return subCommandArgs
       },
-      handler: (args) => {
+      handler: async (args) => {
         setCommandArguments(initedCommand.command, args);
 
-        if(!isGroupCommand(commandInstance)) commandInstance.run()
+        if(!isGroupCommand(commandInstance)) {
+          if(types.isPromise(commandInstance.run())) {
+            await commandInstance.run()
+          }
+        }
       },
       aliases: commandInstance.aliases,
       describe: `- ${commandInstance.description}`,
@@ -204,13 +209,12 @@ class CommandBuilder {
  *
  * @param options Initialization parameters for the CLI
  */
-export function cli(options: ICli): CommandBuilder {
+export function cli(options: ICli): Promise<CommandBuilder> {
   const { rootCommandClasses, optionParameters } = options
 
   if(options.testArguments) {
     yargs = initYargs()
     yargs.parse(options.testArguments)
-
     yargs.exitProcess(false)
   }
 
@@ -219,7 +223,13 @@ export function cli(options: ICli): CommandBuilder {
 
   if(optionParameters) optionParameters.forEach(applyOption)
 
-  return new CommandBuilder(rootCommandClasses)
+  const commandBuilder = new CommandBuilder(rootCommandClasses)
+
+  return new Promise(resolve => {
+    const _ = yargs.onFinishCommand(() => {
+      resolve(commandBuilder)
+    }).argv
+  })
 }
 
 export { GroupCommand, LeafCommand, Argument, ExternalOption, Option }

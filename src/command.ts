@@ -15,7 +15,7 @@ export interface GroupCommand extends BaseCommand {
  * CLI Command Classes, which actually do something important
  */
 export interface LeafCommand extends BaseCommand {
-  run(): void
+  run(): void | Promise<void>
 }
 
 /**
