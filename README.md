@@ -69,7 +69,7 @@ For this you can find example in [test/index.spec.ts](test/index.spec.ts)
 example for `cli` method call with the command class above:
 
 ```ts
-const commandBuilder = cli({
+const commandBuilder = await cli({
   rootCommandClasses: [TestGroupCommand],
   optionParameters: [
     {
@@ -80,6 +80,16 @@ const commandBuilder = cli({
   ],
 })
 ```
+
+Through the `commandBuilder` object, the initialized classes are reachable.
+
+If you build successfully your cli project (e.g. `#!/usr/bin/env node` presents at the top of the source file...) You can call the command with the setup above:
+
+```sh
+ $ <your-cli-app> testGroupCommand testCommand testargument --api-url http://localhost:8080
+```
+
+This will invoke the testCommand's (async) `run` method, after its fields initialized by Furious Commander.
 
 ## Setup your project
 
