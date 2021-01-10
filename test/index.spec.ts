@@ -1,5 +1,5 @@
 import cli from '../src'
-import { TestCommand, TestCommand4, TestCommand6, TestCommand8, TestCommand9 } from './test-commands'
+import { TestCommand, TestCommand10, TestCommand4, TestCommand6, TestCommand8, TestCommand9 } from './test-commands'
 
 describe('Test Command classes', () => {
   let consoleMessages: string[] = []
@@ -16,9 +16,9 @@ describe('Test Command classes', () => {
     consoleMessages = []
   })
 
-  it('should run LeafCommand run method', () => {
+  it('should run LeafCommand run method', async () => {
     const commandKey = 'testCommand9'
-    const commandBuilder = cli({
+    const commandBuilder = await cli({
       rootCommandClasses: [TestCommand9],
       testArguments: [ commandKey ],
     })
@@ -29,10 +29,10 @@ describe('Test Command classes', () => {
     expect(consoleMessages[0]).toBe(`I'm the testCommand ${commandKey}`)
   })
 
-  it('should set cli option of Command instance', () => {
+  it('should set cli option of Command instance', async () => {
     const commandKey = 'testCommand8'
     const commandOptionValue = 'testOptionValue8'
-    const commandBuilder = cli({
+    const commandBuilder = await cli({
       rootCommandClasses: [TestCommand8],
       testArguments: [ commandKey, '--option-test-command-8', commandOptionValue ],
     })
@@ -42,9 +42,9 @@ describe('Test Command classes', () => {
     expect(consoleMessages[0]).toBe(`I'm the testCommand ${commandKey}. option-test-command-8: ${commandOptionValue}`)
   })
 
-  it('should set cli argument of Command instance', () => {
+  it('should set cli argument of Command instance', async () => {
     const commandArgumentValue = 'I COMMAND!!!!'
-    const commandBuilder = cli({
+    const commandBuilder = await cli({
       rootCommandClasses: [TestCommand4],
       testArguments: [ 'testCommand4', commandArgumentValue ],
     })
@@ -53,10 +53,10 @@ describe('Test Command classes', () => {
     expect(command.argument1).toBe(commandArgumentValue)
   })
 
-  it('should set externally defined cli option default value to Command instance\'s field', () => {
+  it('should set externally defined cli option default value to Command instance\'s field', async () => {
     const optionValue = 'http://obeying-service.local'
     const optionKey = 'api-url'
-    const commandBuilder = cli({
+    const commandBuilder = await cli({
       rootCommandClasses: [TestCommand6],
       testArguments: [ 'testCommand6' ],
       optionParameters: [
@@ -72,10 +72,10 @@ describe('Test Command classes', () => {
     expect(command.apiUrl).toBe(optionValue)
   })
 
-  it('should set passed externally defined cli option value to Command instance\'s field', () => {
+  it('should set passed externally defined cli option value to Command instance\'s field', async () => {
     const optionValue = 'http://obedient-service.local'
     const optionKey = 'api-url'
-    const commandBuilder = cli({
+    const commandBuilder = await cli({
       rootCommandClasses: [TestCommand6],
       testArguments: [ 'testCommand6', `--${optionKey}`, optionValue ],
       optionParameters: [
@@ -90,13 +90,13 @@ describe('Test Command classes', () => {
     expect(command.apiUrl).toBe(optionValue)
   })
 
-  it('should use GroupCommand and call one of its LeafCommand (depth: 3)', () => {
+  it('should use GroupCommand and call one of its LeafCommand (depth: 3)', async () => {
     //also use alias of the rootCommand
     //also fetch parent command option in leaf command
     const testCommand3OptionValue = 'BUT DO LIKE IN OTHER WAY NOW!'
     const testCommand3OptionKey = 'option-test-command-3'
     const leafCommandName = 'testCommand9'
-    const commandBuilder = cli({
+    const commandBuilder = await cli({
       rootCommandClasses: [TestCommand],
       testArguments: [ 'tst', `testCommand3`, leafCommandName, `--${testCommand3OptionKey}`, testCommand3OptionValue ],
     })
@@ -108,5 +108,16 @@ describe('Test Command classes', () => {
 
       expect(consoleMessages[0]).toBe(`I'm the testCommand ${leafCommandName}`)
       expect(command.optionTestCommand3).toBe(testCommand3OptionValue)
+  })
+
+  it('should run async operation on command class then wait for it', async () => {
+    const commandKey = 'testCommand10'
+    const commandBuilder = await cli({
+      rootCommandClasses: [TestCommand10],
+      testArguments: [ commandKey ],
+    })
+    commandBuilder.initedCommands[0].command as TestCommand10
+
+    expect(consoleMessages[0]).toBe(`I'm the testCommand ${commandKey}`)
   })
 })

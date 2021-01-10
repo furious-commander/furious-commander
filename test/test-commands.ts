@@ -1,5 +1,20 @@
 import { GroupCommand, LeafCommand, Argument, ExternalOption, Option } from '../src'
 
+export class TestCommand10 implements LeafCommand {
+  public readonly name = 'testCommand10'
+
+  public readonly description = 'This is the testcommand10'
+
+  public async run(): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    return new Promise(resolve => {
+      console.log(`I'm the testCommand ${this.name}`)
+      resolve()
+    })
+  }
+}
+
 export class TestCommand9 implements LeafCommand {
   public readonly name = 'testCommand9'
 
