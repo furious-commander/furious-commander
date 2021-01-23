@@ -4,7 +4,6 @@ import "reflect-metadata";
 import { isGroupCommand, Command, GroupCommand, LeafCommand } from './command'
 import { IOption, getOption, Option, getExternalOption, ExternalOption } from './option'
 import { IArgument, getArgument, Argument } from './argument';
-import { types } from 'util'
 
 let yargs = initYargs(process.argv.slice(2))
 
@@ -178,9 +177,7 @@ class CommandBuilder {
         setCommandArguments(initedCommand.command, args);
 
         if(!isGroupCommand(commandInstance)) {
-          if(types.isPromise(commandInstance.run())) {
-            await commandInstance.run()
-          }
+          await commandInstance.run()
         }
       },
       aliases: commandInstance.aliases,
