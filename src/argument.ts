@@ -7,7 +7,10 @@ const argumentMetadataKey = Symbol("Argument");
  */
 export interface IArgument<T = unknown> {
   key: string
-  demandOption?: boolean
+  /**
+   * Whether the argument is required to pass
+  */
+  required?: boolean
   default?: T
   /** string or array of strings, see `alias()` */
   alias?: string | ReadonlyArray<string>

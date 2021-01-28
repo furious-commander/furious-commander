@@ -10,7 +10,12 @@ export interface IOption<T = unknown> {
   describe: string
   type?: "string" | "boolean" | 'array' | 'number' | 'count'
   alias?: string
-  demandOption?: boolean
+  /**
+   * Whether the option is required to pass
+   *
+   * DemandOption in yargs
+  */
+  required?: boolean
   default?: T
 }
 

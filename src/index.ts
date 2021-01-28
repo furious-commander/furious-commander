@@ -28,8 +28,8 @@ export type InitedCommand = {
 }
 
 function applyOption(option: IOption) {
-  const { key, describe, alias, type = 'string', demandOption, default: defaultValue } = option
-  yargs.option(key, { alias, describe, type, demandOption, default: defaultValue })
+  const { key, describe, alias, type = 'string', required, default: defaultValue } = option
+  yargs.option(key, { alias, describe, type, demandOption: required, default: defaultValue })
 }
 
 /**
@@ -135,17 +135,17 @@ class CommandBuilder {
     const optionalArgumentSigns = ['[', ']']
     commandOptionAndArgumentConfig.commandArguments
       .sort((a, b) => {
-        if(a.demandOption) {
-          if(b.demandOption) return 0
+        if(a.required) {
+          if(b.required) return 0
 
           return 1
-        } else if(b.demandOption) return -1
+        } else if(b.required) return -1
 
         return 0
       })
       .forEach(argument => {
-        const { key, demandOption } =  argument
-        const argumentSigns = demandOption ? requiredArgumentSigns : optionalArgumentSigns
+        const { key, required } =  argument
+        const argumentSigns = required ? requiredArgumentSigns : optionalArgumentSigns
         commandString += ` ${argumentSigns[0]}${key}${argumentSigns[1]}`
       })
 
@@ -159,8 +159,8 @@ class CommandBuilder {
 
         //handle command's arguments
         for(const argument of commandOptionAndArgumentConfig.commandArguments) {
-          const { key, demandOption,  default: defaultValue, alias, array, choices, coerce, conflicts, desc, describe, implies, normalize, type } = argument
-          yargs.positional(key, { demandOption, default: defaultValue, alias, array, choices, coerce, conflicts, desc, describe, implies, normalize, type })
+          const { key, required,  default: defaultValue, alias, array, choices, coerce, conflicts, desc, describe, implies, normalize, type } = argument
+          yargs.positional(key, { demandOption: required, default: defaultValue, alias, array, choices, coerce, conflicts, desc, describe, implies, normalize, type })
         }
 
         if(!isGroupCommand(commandInstance)) return yargs;
