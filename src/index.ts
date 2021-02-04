@@ -1,9 +1,10 @@
 import initYargs from 'yargs/yargs'
 import { Argv } from 'yargs'
 import "reflect-metadata";
-import { isGroupCommand, Command, GroupCommand, LeafCommand } from './command'
+import { isGroupCommand, Command, GroupCommand, LeafCommand, InitedCommand } from './command'
 import { IOption, getOption, Option, getExternalOption, ExternalOption } from './option'
 import { IArgument, getArgument, Argument } from './argument';
+import { getCommandInstance } from './utils'
 
 /** native yargs object */
 let yargs = initYargs(process.argv.slice(2))
@@ -21,11 +22,6 @@ interface ICli {
    * test arguments in order to testing the CLI's behaviour
    */
   testArguments?: Array<string>
-}
-
-export type InitedCommand = {
-  command: Command
-  subCommands: InitedCommand[]
 }
 
 function applyOption(option: IOption) {
@@ -230,5 +226,11 @@ export function cli(options: ICli): Promise<CommandBuilder> {
   })
 }
 
-export { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Command, yargs }
+export { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Command, InitedCommand }
+
+export const Utils = {
+  isGroupCommand,
+  yargs,
+  getCommandInstance,
+}
 export default cli;
