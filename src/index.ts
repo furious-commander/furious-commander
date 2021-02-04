@@ -5,6 +5,7 @@ import { isGroupCommand, Command, GroupCommand, LeafCommand } from './command'
 import { IOption, getOption, Option, getExternalOption, ExternalOption } from './option'
 import { IArgument, getArgument, Argument } from './argument';
 
+/** native yargs object */
 let yargs = initYargs(process.argv.slice(2))
 
 interface ICli {
@@ -229,5 +230,5 @@ export function cli(options: ICli): Promise<CommandBuilder> {
   })
 }
 
-export { GroupCommand, LeafCommand, Argument, ExternalOption, Option }
+export { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Command, yargs }
 export default cli;
