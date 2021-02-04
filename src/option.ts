@@ -2,6 +2,8 @@ import { Command } from './command'
 
 const optionMetadataKey = Symbol("Option");
 
+type Choices = ReadonlyArray<string | number | true | undefined>;
+
 /**
  * interface for `Option` decorator
  */
@@ -9,7 +11,8 @@ export interface IOption<T = unknown> {
   key: string
   describe: string
   type?: "string" | "boolean" | 'array' | 'number' | 'count'
-  alias?: string
+  /** string or array of strings, alias(es) for the canonical option key */
+  alias?: string | ReadonlyArray<string>
   /**
    * Whether the option is required to pass
    *
@@ -17,6 +20,26 @@ export interface IOption<T = unknown> {
   */
   required?: boolean
   default?: T
+  /** value or array of values, limit valid option arguments to a predefined set */
+  choices?: Choices
+  /** function, coerce or transform parsed command line values into another value */
+  coerce?: (arg: unknown) => T
+  /** boolean, interpret option as a path to a JSON config file */
+  config?: boolean
+  /** string or object, require certain keys not to be set */
+  conflicts?: string | ReadonlyArray<string> | { [key: string]: string | ReadonlyArray<string> }
+  /** string, use this description for the default value in help content */
+  defaultDescription?: string
+  /** boolean or string, mark the argument as deprecated */
+  deprecated?: boolean | string
+  /** string, when displaying usage instructions place the option under an alternative group heading */
+  group?: string
+  /** don't display option in help output. */
+  hidden?: boolean
+  /**  string or object, require certain keys to be set */
+  implies?: string | ReadonlyArray<string> | { [key: string]: string | ReadonlyArray<string> }
+  /** number, specify how many arguments should be consumed for the option */
+  nargs?: number
 }
 
 /**

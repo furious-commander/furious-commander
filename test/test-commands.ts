@@ -68,7 +68,7 @@ export class TestCommand4 implements LeafCommand {
   @Option({ key: 'option-test-command-4', describe: 'test option for TestCommand4', type: 'boolean' })
   public option1!: boolean
 
-  @Argument({ key: 'argument123123', describe: 'test argument for TestCommand4', demandOption: true })
+  @Argument({ key: 'argument123123', describe: 'test argument for TestCommand4', required: true })
   public argument1!: string
 
   public readonly name = 'testCommand4'

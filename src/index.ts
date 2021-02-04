@@ -28,8 +28,8 @@ export type InitedCommand = {
 }
 
 function applyOption(option: IOption) {
-  const { key, describe, alias, type = 'string', required, default: defaultValue } = option
-  yargs.option(key, { alias, describe, type, demandOption: required, default: defaultValue })
+  const { key, describe, alias, type = 'string', required, default: defaultValue, choices, coerce, conflicts,implies, config, defaultDescription, deprecated, group, hidden, nargs } = option
+  yargs.option(key, { alias, describe, type, demandOption: required, default: defaultValue, choices, coerce, conflicts,implies,  config, defaultDescription, deprecated, group, hidden, nargs })
 }
 
 /**
