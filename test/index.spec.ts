@@ -1,5 +1,6 @@
 import cli from '../src'
-import { TestCommand, TestCommand10, TestCommand4, TestCommand6, TestCommand8, TestCommand9 } from './test-commands'
+import { TestCommand, TestCommand10, TestCommand11, TestCommand12, TestCommand4, TestCommand6, TestCommand8, TestCommand9 } from './test-commands'
+import { getCommandInstance } from '../src/utils'
 
 describe('Test Command classes', () => {
   let consoleMessages: string[] = []
@@ -119,5 +120,20 @@ describe('Test Command classes', () => {
     commandBuilder.initedCommands[0].command as TestCommand10
 
     expect(consoleMessages[0]).toBe(`I'm the testCommand ${commandKey}`)
+  })
+
+  it('should reach aggregated command fields', async () => {
+    const aggregatedArgument1 = 'I COMMAND!!!!'
+    const cliPath = ['testCommand11', `testCommand12`]
+    const commandBuilder = await cli({
+      rootCommandClasses: [TestCommand11],
+      testArguments: [ cliPath[0], cliPath[1], aggregatedArgument1, `--option-test-command-4` ],
+    })
+    const command: TestCommand12 = getCommandInstance(commandBuilder.initedCommands, cliPath) as TestCommand12
+
+    expect(consoleMessages[0]).toBe(`I'm the testCommand ${cliPath[1]}`)
+    expect(command.aggregatedRelation.name).toBe('testCommand4')
+    expect(consoleMessages[1]).toBe(`Aggregated relation "argument1" value: ${aggregatedArgument1}`)
+    expect(consoleMessages[2]).toBe(`Aggregated relation "option1" value: true`)
   })
 })

@@ -1,4 +1,28 @@
-import { GroupCommand, LeafCommand, Argument, ExternalOption, Option } from '../src'
+import { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Aggregation } from '../src'
+
+/** Has to be inited only via testCommand11 */
+export class TestCommand12 implements LeafCommand {
+  public readonly name = 'testCommand12'
+
+  public readonly description = 'This is the testcommand12'
+
+  @Aggregation(['testCommand11', 'testCommand4']) //'cause this ref
+  public aggregatedRelation!: TestCommand4
+
+  public run(): void {
+    console.log(`I'm the testCommand ${this.name}`)
+    console.log(`Aggregated relation "argument1" value: ${this.aggregatedRelation.argument1}`)
+    console.log(`Aggregated relation "option1" value: ${this.aggregatedRelation.option1}`)
+  }
+}
+
+export class TestCommand11 implements GroupCommand {
+  public readonly name = 'testCommand11'
+
+  public readonly description = 'This is the testcommand11'
+
+  public subCommandClasses = [TestCommand4, TestCommand12]
+}
 
 export class TestCommand10 implements LeafCommand {
   public readonly name = 'testCommand10'
