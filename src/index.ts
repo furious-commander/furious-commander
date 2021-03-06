@@ -5,6 +5,7 @@ import { isGroupCommand, Command, GroupCommand, LeafCommand, InitedCommand } fro
 import { IOption, getOption, Option, getExternalOption, ExternalOption } from './option'
 import { IArgument, getArgument, Argument } from './argument';
 import { getCommandInstance } from './utils'
+import { getAggregation, Aggregation } from './aggregation';
 
 /** native yargs object */
 let yargs = initYargs(process.argv.slice(2))
@@ -24,19 +25,30 @@ interface ICli {
   testArguments?: Array<string>
 }
 
+interface CommandDecoratorData {
+  commandOptions: IOption[]
+  commandArguments: IArgument[]
+}
+
+interface CommandDecoratorDataWithAggregations extends CommandDecoratorData {
+  commandAggregationRelations: string[][]
+}
+
 function applyOption(option: IOption) {
   const { key, describe, alias, type = 'string', required, default: defaultValue, choices, coerce, conflicts,implies, config, defaultDescription, deprecated, group, hidden, nargs } = option
   yargs.option(key, { alias, describe, type, demandOption: required, default: defaultValue, choices, coerce, conflicts,implies,  config, defaultDescription, deprecated, group, hidden, nargs })
 }
 
 /**
- * Fetches the given instance Argument and Option configs
+ * Fetches the given instance Argument, Option and Aggregation configs
  *
  * @param target Command instance
+ * @returns all decorated metadata of the Command instance
  */
-function getCommandArgumentAndOptionConfig<T extends Command>(target: T): { commandOptions: IOption[], commandArguments: IArgument[]} {
+function getCommandDecoratorData<T extends Command>(target: T): CommandDecoratorDataWithAggregations {
   const commandOptions: IOption[] = []
   const commandArguments: IArgument[] = []
+  const commandAggregationRelations: string[][] = []
   // eslint-disable-next-line guard-for-in
   for(const instanceKey in target) {
     const option = getOption(target, instanceKey)
@@ -52,11 +64,36 @@ function getCommandArgumentAndOptionConfig<T extends Command>(target: T): { comm
     if(argument) {
       commandArguments.push(argument)
     }
+
+    const aggregation = getAggregation(target, instanceKey)
+
+    if(aggregation) {
+      commandAggregationRelations.push(aggregation)
+    }
   }
 
   return {
     commandOptions,
     commandArguments,
+    commandAggregationRelations,
+  }
+}
+
+/**
+ * Recursive regard of aggregated relation of the starting command
+ * resolves aggregated relations
+ * yargs decorators
+ *
+ * @return
+ */
+function getCommandDecoratorFields<T extends Command>(target: T, initedCommands: InitedCommand[], allDecoratorData: CommandDecoratorData) {
+  const commandDecoratorData = getCommandDecoratorData(target);
+  // add fetched decorator data to the total
+  allDecoratorData.commandArguments.push(...commandDecoratorData.commandArguments)
+  allDecoratorData.commandOptions.push(...commandDecoratorData.commandOptions)
+  for(const aggregatedRelationPath of commandDecoratorData.commandAggregationRelations) {
+    const aggregatedCommandInstance = getCommandInstance(initedCommands, aggregatedRelationPath)
+    getCommandDecoratorFields(aggregatedCommandInstance, initedCommands, allDecoratorData)
   }
 }
 
@@ -65,8 +102,9 @@ function getCommandArgumentAndOptionConfig<T extends Command>(target: T): { comm
  *
  * @param target Command instance
  * @param options CLI arguments which was mapped to this map object by yargs
+ * @param initedCommands in order to get back the aggregated relation instance
  */
-function setCommandArguments<T extends Command>(target: T, options: { [key: string]: unknown }) {
+function initCommandFields<T extends Command>(target: T, options: { [key: string]: unknown }, initedCommands: InitedCommand[]) {
   // eslint-disable-next-line guard-for-in
   for(const instanceKey in target) {
     const option = getOption(target, instanceKey)
@@ -86,13 +124,27 @@ function setCommandArguments<T extends Command>(target: T, options: { [key: stri
 
       continue
     }
-    const argument = getArgument(target, instanceKey)
 
+    const argument = getArgument(target, instanceKey)
 
     if(argument) {
       const { key } = argument;
 
       if(options[key]) target[instanceKey] = options[key] as T[Extract<keyof T, string>]
+
+      continue
+    }
+
+    const aggregatedRelationCliPath = getAggregation(target, instanceKey)
+
+    if(aggregatedRelationCliPath) {
+      const aggregatedCommandInstance = getCommandInstance(initedCommands, aggregatedRelationCliPath)
+
+      if(!aggregatedCommandInstance) throw new Error(`Does not have available Command with CLI path: ${aggregatedRelationCliPath}`)
+      // recursive set all aggregated relations' feild
+      initCommandFields(aggregatedCommandInstance, options, initedCommands)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      target[instanceKey] = aggregatedCommandInstance as any
     }
   }
 }
@@ -117,20 +169,26 @@ class CommandBuilder {
     }
 
     for(const initedCommand of this.initedCommands) {
-      this.initCommandClassYargs(initedCommand)
+      // if(process.argv.slice(2).includes(initedCommand.command.name)) {
+        this.initCommandClassYargs(initedCommand)
+      // }
     }
-
-    // const _ = yargs.argv
   }
 
   private initCommandClassYargs(initedCommand: InitedCommand): Argv {
     const commandInstance = initedCommand.command
-    const commandOptionAndArgumentConfig = getCommandArgumentAndOptionConfig(commandInstance);
+    const commandArguments: IArgument[] = []
+    const commandOptions: IOption[] = []
+    getCommandDecoratorFields(commandInstance, this.initedCommands, { //only for aggregation
+      commandArguments,
+      commandOptions,
+    })
+    //All aggregatedArguments
     let commandString = `${commandInstance.name}`
     //commandString build based on command class arguments
     const requiredArgumentSigns = ['<', '>']
     const optionalArgumentSigns = ['[', ']']
-    commandOptionAndArgumentConfig.commandArguments
+    commandArguments
       .sort((a, b) => {
         if(a.required) {
           if(b.required) return 0
@@ -150,12 +208,12 @@ class CommandBuilder {
       command: commandString,
       builder: () => {
         //handle command's options
-        for(const option of commandOptionAndArgumentConfig.commandOptions) {
+        for(const option of commandOptions) {
           applyOption(option)
         }
 
         //handle command's arguments
-        for(const argument of commandOptionAndArgumentConfig.commandArguments) {
+        for(const argument of commandArguments) {
           const { key, required,  default: defaultValue, alias, array, choices, coerce, conflicts, desc, describe, implies, normalize, type } = argument
           yargs.positional(key, { demandOption: required, default: defaultValue, alias, array, choices, coerce, conflicts, desc, describe, implies, normalize, type })
         }
@@ -171,7 +229,7 @@ class CommandBuilder {
         return subCommandArgs
       },
       handler: async (args) => {
-        setCommandArguments(initedCommand.command, args);
+        initCommandFields(initedCommand.command, args, this.initedCommands);
 
         if(!isGroupCommand(commandInstance)) {
           await commandInstance.run()
@@ -226,7 +284,16 @@ export function cli(options: ICli): Promise<CommandBuilder> {
   })
 }
 
-export { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Command, InitedCommand }
+export {
+  GroupCommand,
+  LeafCommand,
+  Argument,
+  ExternalOption,
+  Option,
+  Aggregation,
+  Command,
+  InitedCommand,
+}
 
 export const Utils = {
   isGroupCommand,
