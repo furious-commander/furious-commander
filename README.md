@@ -91,6 +91,31 @@ If you build successfully your cli project (e.g. `#!/usr/bin/env node` presents 
 
 This will invoke the testCommand's (async) `run` method, after its fields initialized by Furious Commander.
 
+### Aggregation
+
+The framework support aggregated relations between independent commands.
+It means, one command is able to reach the properties of other command.
+The configurations of the referenced aggregated command will be applied to the base class, that defines the relation.
+In order to build up this relation, an arbitrary field of the class has to be decorated with `Aggregation`.
+
+A sample class to show how it is possible
+```ts
+import { Aggregation } from 'furious-commander'
+
+export class TestCommand {
+
+  @Aggregation(['group-command', 'furious-command']) // CLI path of the referenced Command
+  public aggregatedRelation!: FuriousCommand // Type in here the class of the aggregated command
+
+  // (...)
+}
+```
+By this, `TestCommand` can invoke any function of `FuriousCommand`, and `FuriousCommand` all Options and Arguments have been initialized by the framework.
+Of course, all required parameters of aggregated relations have to be defined in the CLI call.
+For instance, `FuriousCommand` has required argument `argument-1`, when calling `TestCommand`, `argument-1` has to be passed as well even if it is not defined directly in `TestCommand`.
+
+You can see this functionality in action on test `should reach aggregated command fields`.
+
 ## Setup your project
 
 In order to use decorators in your project (until it's not available in vanilla JS) you should use `typescript` with the following configuration:
