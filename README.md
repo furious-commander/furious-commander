@@ -116,6 +116,36 @@ For instance, `FuriousCommand` has required argument `argument-1`, when calling 
 
 You can see this functionality in action on test `should reach aggregated command fields`.
 
+### Command Class Decorators
+
+You can define decorator on command class definition, which applies globally contrains on the class' arguments and options.
+
+#### Allow only either one param
+
+It is possible to allow only one parameter of the given option/argument key set.
+This key set consists required parameters for the successful run, but only one of them has to be defined.
+
+```ts
+@EitherOneParam(['option1', 'option2'])
+export class TestCommand13 implements LeafCommand {
+  public readonly name = 'testCommand13'
+
+  public readonly description = 'This is the testcommand13'
+
+  @Option({ key: 'option1', describe: 'Test option1 for TestCommand13' })
+  public option1!: string;
+
+  @Option({ key: 'option2', describe: 'Test option2 for TestCommand13' })
+  public option2!: string;
+
+  public run(): void {
+    // (...)
+  }
+}
+```
+
+By this setup I cannot call `TestCommand13` with both options `option1` and `option2`, but I have to pass at least one of these.
+
 ## Setup your project
 
 In order to use decorators in your project (until it's not available in vanilla JS) you should use `typescript` with the following configuration:
