@@ -1,4 +1,24 @@
 import { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Aggregation } from '../src'
+import { EitherOneParam } from '../src/command'
+
+@EitherOneParam(['option1', 'option2'])
+export class TestCommand13 implements LeafCommand {
+  public readonly name = 'testCommand13'
+
+  public readonly description = 'This is the testcommand13'
+
+  @Option({ key: 'option1', describe: 'Test option1 for TestCommand13' })
+  public option1!: string;
+
+  @Option({ key: 'option2', describe: 'Test option2 for TestCommand13' })
+  public option2!: string;
+
+  public run(): void {
+    console.log(`I'm the testCommand ${this.name}`)
+    console.log(`Aggregated relation "option1" value: ${this.option1}`)
+    console.log(`Aggregated relation "option2" value: ${this.option2}`)
+  }
+}
 
 /** Has to be inited only via testCommand11 */
 export class TestCommand12 implements LeafCommand {

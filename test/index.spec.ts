@@ -1,15 +1,19 @@
 import cli from '../src'
-import { TestCommand, TestCommand10, TestCommand11, TestCommand12, TestCommand4, TestCommand6, TestCommand8, TestCommand9 } from './test-commands'
+import { TestCommand, TestCommand10, TestCommand11, TestCommand12, TestCommand13, TestCommand4, TestCommand6, TestCommand8, TestCommand9 } from './test-commands'
 import { getCommandInstance } from '../src/utils'
 
 describe('Test Command classes', () => {
   let consoleMessages: string[] = []
+  const consoleErrors: string[] = []
 
   beforeAll(() => {
     global.console.log = jest.fn((message) => {
       consoleMessages.push(message)
     })
     jest.spyOn(global.console, 'warn')
+    global.console.error = jest.fn((message) => {
+      consoleErrors.push(message)
+    })
   })
 
   beforeEach(() => {
@@ -135,5 +139,40 @@ describe('Test Command classes', () => {
     expect(command.aggregatedRelation.name).toBe('testCommand4')
     expect(consoleMessages[1]).toBe(`Aggregated relation "argument1" value: ${aggregatedArgument1}`)
     expect(consoleMessages[2]).toBe(`Aggregated relation "option1" value: true`)
+  })
+
+  describe('should allow either one of the defined contained params', () => {
+    const cliPath = [ `testCommand13` ]
+    it('check only with the first param', async () => {
+      const cliCommand1 = [ ...cliPath, `--option1`, 'whatever' ]
+      await cli({
+        rootCommandClasses: [TestCommand13],
+        testArguments: [...cliCommand1],
+      })
+
+      expect(consoleMessages[0]).toBe(`I'm the testCommand ${cliCommand1[0]}`)
+      expect(consoleMessages[1]).toBe(`Aggregated relation "option1" value: ${cliCommand1[2]}`)
+      expect(consoleMessages[2]).toBe(`Aggregated relation "option2" value: undefined`)
+    })
+
+    it('check only with the second param', async () => {
+      const cliCommand2 = [ ...cliPath, `--option2`, 'whatever' ]
+      await cli({
+        rootCommandClasses: [TestCommand13],
+        testArguments: [...cliCommand2],
+      })
+
+      expect(consoleMessages[0]).toBe(`I'm the testCommand ${cliCommand2[0]}`)
+      expect(consoleMessages[1]).toBe(`Aggregated relation "option1" value: undefined`)
+      expect(consoleMessages[2]).toBe(`Aggregated relation "option2" value: ${cliCommand2[2]}`)
+    })
+
+    it('has to throw error when using both params at the same time', async () => {
+      const cliCommand = [ ...cliPath, `--option1`, 'whatever', `--option2`, 'whatever' ]
+      await expect(cli({
+        rootCommandClasses: [TestCommand13],
+        testArguments: [...cliCommand],
+      })).rejects.toThrow('Arguments option1 and option2 are mutually exclusive')
+    })
   })
 })
