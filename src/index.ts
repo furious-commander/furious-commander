@@ -1,7 +1,7 @@
 import initYargs from 'yargs/yargs'
-import { Argv } from 'yargs'
+import { Arguments, Argv } from 'yargs'
 import "reflect-metadata";
-import { isGroupCommand, Command, GroupCommand, LeafCommand, InitedCommand } from './command'
+import { isGroupCommand, Command, GroupCommand, LeafCommand, InitedCommand, getEitherOneParam, EitherOneParam } from './command'
 import { IOption, getOption, Option, getExternalOption, ExternalOption } from './option'
 import { IArgument, getArgument, Argument } from './argument';
 import { getCommandInstance } from './utils'
@@ -37,6 +37,20 @@ interface CommandDecoratorDataWithAggregations extends CommandDecoratorData {
 function applyOption(option: IOption) {
   const { key, describe, alias, type = 'string', required, default: defaultValue, choices, coerce, conflicts,implies, config, defaultDescription, deprecated, group, hidden, nargs } = option
   yargs.option(key, { alias, describe, type, demandOption: required, default: defaultValue, choices, coerce, conflicts,implies,  config, defaultDescription, deprecated, group, hidden, nargs })
+}
+
+const demandOneOfOption: (argv: Arguments, ...options: string[]) => boolean = (argv: Arguments, ...options: string[]) => {
+  const count = options.filter(option => argv[option]).length;
+  const lastOption = options.pop();
+
+  if (count === 0) {
+    throw new Error(`Exactly one of the arguments ${options.join(', ')} and ${lastOption} is required`);
+  }
+  else if (count > 1) {
+    throw new Error(`Arguments ${options.join(', ')} and ${lastOption} are mutually exclusive`);
+  }
+
+  return true;
 }
 
 /**
@@ -183,6 +197,10 @@ class CommandBuilder {
       commandArguments,
       commandOptions,
     })
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const eitherOneArray = getEitherOneParam((commandInstance as any).constructor)
+
     //All aggregatedArguments
     let commandString = `${commandInstance.name}`
     //commandString build based on command class arguments
@@ -216,6 +234,13 @@ class CommandBuilder {
         for(const argument of commandArguments) {
           const { key, required,  default: defaultValue, alias, array, choices, coerce, conflicts, desc, describe, implies, normalize, type } = argument
           yargs.positional(key, { demandOption: required, default: defaultValue, alias, array, choices, coerce, conflicts, desc, describe, implies, normalize, type })
+        }
+
+        //checks class defined restrictions
+        if(eitherOneArray !== undefined) {
+          for(const eitherOne of eitherOneArray) {
+            yargs.check((argv) => demandOneOfOption(argv, ...eitherOne))
+          }
         }
 
         if(!isGroupCommand(commandInstance)) return yargs;
@@ -294,6 +319,7 @@ export {
   Aggregation,
   Command,
   InitedCommand,
+  EitherOneParam,
 }
 
 export const Utils = {
