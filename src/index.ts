@@ -278,6 +278,7 @@ export function cli(options: ICli): Promise<CommandBuilder> {
   const commandBuilder = new CommandBuilder(rootCommandClasses)
 
   return new Promise(resolve => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _ = yargs.onFinishCommand(() => {
       resolve(commandBuilder)
     }).argv
