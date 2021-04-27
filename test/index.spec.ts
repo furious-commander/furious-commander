@@ -121,21 +121,19 @@ describe("Test Command classes", () => {
     //also fetch parent command option in leaf command
     const testCommand3OptionValue = "BUT DO LIKE IN OTHER WAY NOW!";
     const testCommand3OptionKey = "option-test-command-3";
-    const leafCommandName = "testCommand9";
     const commandBuilder = await cli({
       rootCommandClasses: [TestCommand],
       testArguments: [
-        "tst",
+        "testCommand",
         `testCommand3`,
-        leafCommandName,
+        "testCommand9",
         `--${testCommand3OptionKey}`,
         testCommand3OptionValue,
       ],
     });
-    const command: TestCommand9 = commandBuilder.initedCommands[0]
-      .subCommands[0].subCommands[1].command as TestCommand9;
+    const command: TestCommand9 = commandBuilder.runnable as TestCommand9;
 
-    expect(consoleMessages[0]).toBe(`I'm the testCommand ${leafCommandName}`);
+    expect(consoleMessages[0]).toBe(`I'm the testCommand testCommand9`);
     expect(command.optionTestCommand3).toBe(testCommand3OptionValue);
   });
 
@@ -214,7 +212,7 @@ describe("Test Command classes", () => {
       );
     });
 
-    it("has to throw error when using both params at the same time", async () => {
+    it("has to reject mutually exclusive params", async () => {
       const cliCommand = [
         ...cliPath,
         `--option1`,
@@ -222,12 +220,11 @@ describe("Test Command classes", () => {
         `--option2`,
         "whatever",
       ];
-      await expect(
-        cli({
-          rootCommandClasses: [TestCommand13],
-          testArguments: [...cliCommand],
-        })
-      ).rejects.toThrow(
+      const result = await cli({
+        rootCommandClasses: [TestCommand13],
+        testArguments: [...cliCommand],
+      });
+      expect(result.context).toBe(
         "option1 and option2 are incompatible, please only specify one."
       );
     });

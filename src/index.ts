@@ -1,10 +1,6 @@
 import * as Argv from "cafe-args";
 import "reflect-metadata";
-import {
-  Aggregation,
-  findFirstAggregration,
-  getAggregation,
-} from "./aggregation";
+import { Aggregation, findFirstAggregration } from "./aggregation";
 import { Argument, getArgument, IArgument } from "./argument";
 import {
   Command,
@@ -47,10 +43,6 @@ interface CommandDecoratorData {
   commandArguments: IArgument[];
 }
 
-interface CommandDecoratorDataWithAggregations extends CommandDecoratorData {
-  commandAggregationRelations: string[][];
-}
-
 /**
  * Fetches the given instance Argument, Option and Aggregation configs
  *
@@ -59,10 +51,9 @@ interface CommandDecoratorDataWithAggregations extends CommandDecoratorData {
  */
 function getCommandDecoratorData<T extends Command>(
   target: T
-): CommandDecoratorDataWithAggregations {
+): CommandDecoratorData {
   const commandOptions: IOption[] = [];
   const commandArguments: IArgument[] = [];
-  const commandAggregationRelations: string[][] = [];
   // eslint-disable-next-line guard-for-in
   for (const instanceKey in target) {
     const option = getOption(target, instanceKey);
@@ -78,18 +69,11 @@ function getCommandDecoratorData<T extends Command>(
       commandArguments.push(argument);
       continue;
     }
-
-    const aggregation = getAggregation(target, instanceKey);
-
-    if (aggregation) {
-      commandAggregationRelations.push(aggregation);
-    }
   }
 
   return {
     commandOptions,
     commandArguments,
-    commandAggregationRelations,
   };
 }
 
@@ -101,7 +85,6 @@ function getCommandDecoratorData<T extends Command>(
  */
 function getCommandDecoratorFields<T extends Command>(
   target: T,
-  initedCommands: InitedCommand[],
   allDecoratorData: CommandDecoratorData
 ) {
   const commandDecoratorData = getCommandDecoratorData(target);
@@ -168,6 +151,7 @@ class CommandBuilder {
   public initedCommands: InitedCommand[];
   public runnable?: LeafCommand;
   public parser: Argv.Parser;
+  public context!: Argv.Context;
 
   public constructor(
     parser: Argv.Parser,
@@ -189,54 +173,65 @@ class CommandBuilder {
       this.initCommandInstance(this.parser, initedCommand);
     }
 
-    const context = this.parser.parse(argv);
+    this.context = this.parser.parse(argv);
 
     if (
-      context.exitReason ||
-      typeof context === "string" ||
-      !context.command?.meta?.instance
+      this.context.exitReason ||
+      typeof this.context === "string" ||
+      !this.context.command?.meta?.instance
     ) {
       return;
     }
 
-    const command = context.command.meta.instance as Command;
+    const command = this.context.command.meta.instance as Command;
 
-    initCommandFields(command, { ...context.options, ...context.arguments });
+    initCommandFields(command, {
+      ...this.context.options,
+      ...this.context.arguments,
+    });
 
-    if (context.sibling) {
-      const key: string = context.command.meta.instance
+    if (this.context.sibling) {
+      const key: string = this.context.command.meta.instance
         .siblingProperty as string;
-      const siblingCommand: Command = context.sibling.command.meta
+      const siblingCommand: Command = this.context.sibling.command.meta
         .instance as Command;
       Reflect.set(command, key, siblingCommand);
-      initCommandFields(context.sibling.command.meta.instance as Command, {
-        ...context.sibling.options,
-        ...context.sibling.arguments,
+      initCommandFields(this.context.sibling.command.meta.instance as Command, {
+        ...this.context.sibling.options,
+        ...this.context.sibling.arguments,
       });
     }
-    this.runnable = context.command.meta.instance as LeafCommand;
+    this.runnable = this.context.command.meta.instance as LeafCommand;
   }
 
-  private createGroup(command: GroupCommand): Argv.Group {
+  private createGroup(
+    command: GroupCommand,
+    commandArguments: IArgument[],
+    commandOptions: IOption[]
+  ): Argv.Group {
     const group = new Argv.Group(command.name, command.description);
+    getCommandDecoratorFields(command, {
+      commandArguments,
+      commandOptions,
+    });
     for (const SubcommandClass of command.subCommandClasses) {
-      const commandArguments: IArgument[] = [];
-      const commandOptions: IOption[] = [];
       const initedSubcommand = new SubcommandClass();
-      getCommandDecoratorFields(command, this.initedCommands, {
-        commandArguments,
-        commandOptions,
-      });
-      getCommandDecoratorFields(initedSubcommand, this.initedCommands, {
-        commandArguments,
-        commandOptions,
-      });
-      const parsableCommand = this.createCommand(
-        initedSubcommand,
-        commandOptions,
-        commandArguments
-      );
-      group.withCommand(parsableCommand);
+
+      if (isGroupCommand(initedSubcommand)) {
+        const childGroup = this.createGroup(
+          initedSubcommand,
+          [...commandArguments],
+          [...commandOptions]
+        );
+        group.withGroup(childGroup);
+      } else {
+        const command = this.createCommand(
+          initedSubcommand,
+          [...commandOptions],
+          [...commandArguments]
+        );
+        group.withCommand(command);
+      }
     }
 
     return group;
@@ -249,20 +244,10 @@ class CommandBuilder {
     const commandInstance = initedCommand.command;
 
     if (isGroupCommand(commandInstance)) {
-      const group = this.createGroup(commandInstance);
+      const group = this.createGroup(commandInstance, [], []);
       parser.addGroup(group);
     } else {
-      const commandArguments: IArgument[] = [];
-      const commandOptions: IOption[] = [];
-      getCommandDecoratorFields(commandInstance, this.initedCommands, {
-        commandArguments,
-        commandOptions,
-      });
-      const command = this.createCommand(
-        commandInstance,
-        commandOptions,
-        commandArguments
-      );
+      const command = this.createCommand(commandInstance, [], []);
       parser.addCommand(command);
     }
   }
@@ -273,9 +258,8 @@ class CommandBuilder {
 
     if (isGroupCommand(command)) {
       const subCommandClasses = command.subCommandClasses;
-      for (const LeafCommandClass of subCommandClasses) {
-        const subCommandClass = this.initCommandClass(LeafCommandClass);
-        subCommands.push(subCommandClass);
+      for (const SubCommandClass of subCommandClasses) {
+        subCommands.push(this.initCommandClass(SubCommandClass));
       }
     }
 
@@ -293,6 +277,10 @@ class CommandBuilder {
     commandOptions: IOption[],
     commandArguments: IArgument[]
   ): Argv.Command {
+    getCommandDecoratorFields(command, {
+      commandArguments,
+      commandOptions,
+    });
     const aggregation = findFirstAggregration(command);
     const commandDefinition = new Argv.Command(
       command.name,
