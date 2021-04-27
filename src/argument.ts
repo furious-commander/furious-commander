@@ -1,21 +1,21 @@
-import { Command } from './command'
+import { Command } from "./command";
 
-const argumentMetadataKey = Symbol('Argument')
+const argumentMetadataKey = Symbol("Argument");
 
 /**
  * interface for `Argument` decorator
  */
 export interface IArgument<T = string | number | bigint | boolean> {
-    key: string
-    description: string
-    type?: 'string' | 'number' | 'bigint' | 'boolean'
-    alias?: string
-    required?: boolean
-    default?: T
-    minimum?: number | bigint
-    conflicts?: string
-    defaultDescription?: string
-    envKey?: string
+  key: string;
+  description: string;
+  type?: "string" | "number" | "bigint" | "boolean";
+  alias?: string;
+  required?: boolean;
+  default?: T;
+  minimum?: number | bigint;
+  conflicts?: string;
+  defaultDescription?: string;
+  envKey?: string;
 }
 
 /**
@@ -24,7 +24,7 @@ export interface IArgument<T = string | number | bigint | boolean> {
  * @param options IOption object, which defines the argument of the command
  */
 export function Argument(options: IArgument): PropertyDecorator {
-    return Reflect.metadata(argumentMetadataKey, options)
+  return Reflect.metadata(argumentMetadataKey, options);
 }
 
 /**
@@ -33,6 +33,9 @@ export function Argument(options: IArgument): PropertyDecorator {
  * @param target Command instance
  * @param propertyKey Property of the command instance
  */
-export function getArgument<T extends Command, K extends Extract<keyof T, string>>(target: T, propertyKey: K): IArgument {
-    return Reflect.getMetadata(argumentMetadataKey, target, propertyKey)
+export function getArgument<
+  T extends Command,
+  K extends Extract<keyof T, string>
+>(target: T, propertyKey: K): IArgument {
+  return Reflect.getMetadata(argumentMetadataKey, target, propertyKey);
 }
