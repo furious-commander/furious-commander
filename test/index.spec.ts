@@ -1,5 +1,15 @@
 import cli from '../src'
-import { TestCommand, TestCommand10, TestCommand11, TestCommand12, TestCommand13, TestCommand4, TestCommand6, TestCommand8, TestCommand9 } from './test-commands'
+import {
+  TestCommand,
+  TestCommand10,
+  TestCommand11,
+  TestCommand12,
+  TestCommand13,
+  TestCommand4,
+  TestCommand6,
+  TestCommand8,
+  TestCommand9,
+} from './test-commands'
 import { getCommandInstance } from '../src/utils'
 
 describe('Test Command classes', () => {
@@ -7,11 +17,11 @@ describe('Test Command classes', () => {
   const consoleErrors: string[] = []
 
   beforeAll(() => {
-    global.console.log = jest.fn((message) => {
+    global.console.log = jest.fn(message => {
       consoleMessages.push(message)
     })
     jest.spyOn(global.console, 'warn')
-    global.console.error = jest.fn((message) => {
+    global.console.error = jest.fn(message => {
       consoleErrors.push(message)
     })
   })
@@ -25,7 +35,7 @@ describe('Test Command classes', () => {
     const commandKey = 'testCommand9'
     const commandBuilder = await cli({
       rootCommandClasses: [TestCommand9],
-      testArguments: [ commandKey ],
+      testArguments: [commandKey],
     })
 
     const command: TestCommand9 = commandBuilder.initedCommands[0].command as TestCommand9
@@ -39,7 +49,7 @@ describe('Test Command classes', () => {
     const commandOptionValue = 'testOptionValue8'
     const commandBuilder = await cli({
       rootCommandClasses: [TestCommand8],
-      testArguments: [ commandKey, '--option-test-command-8', commandOptionValue ],
+      testArguments: [commandKey, '--option-test-command-8', commandOptionValue],
     })
     const command: TestCommand8 = commandBuilder.initedCommands[0].command as TestCommand8
 
@@ -51,19 +61,19 @@ describe('Test Command classes', () => {
     const commandArgumentValue = 'I COMMAND!!!!'
     const commandBuilder = await cli({
       rootCommandClasses: [TestCommand4],
-      testArguments: [ 'testCommand4', commandArgumentValue ],
+      testArguments: ['testCommand4', commandArgumentValue],
     })
     const command: TestCommand4 = commandBuilder.initedCommands[0].command as TestCommand4
 
     expect(command.argument1).toBe(commandArgumentValue)
   })
 
-  it('should set externally defined cli option default value to Command instance\'s field', async () => {
+  it("should set externally defined cli option default value to Command instance's field", async () => {
     const optionValue = 'http://obeying-service.local'
     const optionKey = 'api-url'
     const commandBuilder = await cli({
       rootCommandClasses: [TestCommand6],
-      testArguments: [ 'testCommand6' ],
+      testArguments: ['testCommand6'],
       optionParameters: [
         {
           key: optionKey,
@@ -77,12 +87,12 @@ describe('Test Command classes', () => {
     expect(command.apiUrl).toBe(optionValue)
   })
 
-  it('should set passed externally defined cli option value to Command instance\'s field', async () => {
+  it("should set passed externally defined cli option value to Command instance's field", async () => {
     const optionValue = 'http://obedient-service.local'
     const optionKey = 'api-url'
     const commandBuilder = await cli({
       rootCommandClasses: [TestCommand6],
-      testArguments: [ 'testCommand6', `--${optionKey}`, optionValue ],
+      testArguments: ['testCommand6', `--${optionKey}`, optionValue],
       optionParameters: [
         {
           key: optionKey,
@@ -103,23 +113,19 @@ describe('Test Command classes', () => {
     const leafCommandName = 'testCommand9'
     const commandBuilder = await cli({
       rootCommandClasses: [TestCommand],
-      testArguments: [ 'tst', `testCommand3`, leafCommandName, `--${testCommand3OptionKey}`, testCommand3OptionValue ],
+      testArguments: ['tst', `testCommand3`, leafCommandName, `--${testCommand3OptionKey}`, testCommand3OptionValue],
     })
-    const command: TestCommand9 = commandBuilder
-      .initedCommands[0]
-      .subCommands[0]
-      .subCommands[1]
-      .command as TestCommand9
+    const command: TestCommand9 = commandBuilder.initedCommands[0].subCommands[0].subCommands[1].command as TestCommand9
 
-      expect(consoleMessages[0]).toBe(`I'm the testCommand ${leafCommandName}`)
-      expect(command.optionTestCommand3).toBe(testCommand3OptionValue)
+    expect(consoleMessages[0]).toBe(`I'm the testCommand ${leafCommandName}`)
+    expect(command.optionTestCommand3).toBe(testCommand3OptionValue)
   })
 
   it('should run async operation on command class then wait for it', async () => {
     const commandKey = 'testCommand10'
     const commandBuilder = await cli({
       rootCommandClasses: [TestCommand10],
-      testArguments: [ commandKey ],
+      testArguments: [commandKey],
     })
     commandBuilder.initedCommands[0].command as TestCommand10
 
@@ -131,7 +137,7 @@ describe('Test Command classes', () => {
     const cliPath = ['testCommand11', `testCommand12`]
     const commandBuilder = await cli({
       rootCommandClasses: [TestCommand11],
-      testArguments: [ cliPath[0], cliPath[1], aggregatedArgument1, `--option-test-command-4` ],
+      testArguments: [cliPath[0], cliPath[1], aggregatedArgument1, `--option-test-command-4`],
     })
     const command: TestCommand12 = getCommandInstance(commandBuilder.initedCommands, cliPath) as TestCommand12
 
@@ -142,9 +148,9 @@ describe('Test Command classes', () => {
   })
 
   describe('should allow either one of the defined contained params', () => {
-    const cliPath = [ `testCommand13` ]
+    const cliPath = [`testCommand13`]
     it('check only with the first param', async () => {
-      const cliCommand1 = [ ...cliPath, `--option1`, 'whatever' ]
+      const cliCommand1 = [...cliPath, `--option1`, 'whatever']
       await cli({
         rootCommandClasses: [TestCommand13],
         testArguments: [...cliCommand1],
@@ -156,7 +162,7 @@ describe('Test Command classes', () => {
     })
 
     it('check only with the second param', async () => {
-      const cliCommand2 = [ ...cliPath, `--option2`, 'whatever' ]
+      const cliCommand2 = [...cliPath, `--option2`, 'whatever']
       await cli({
         rootCommandClasses: [TestCommand13],
         testArguments: [...cliCommand2],
@@ -168,11 +174,13 @@ describe('Test Command classes', () => {
     })
 
     it('has to throw error when using both params at the same time', async () => {
-      const cliCommand = [ ...cliPath, `--option1`, 'whatever', `--option2`, 'whatever' ]
-      await expect(cli({
-        rootCommandClasses: [TestCommand13],
-        testArguments: [...cliCommand],
-      })).rejects.toThrow('Arguments option1 and option2 are mutually exclusive')
+      const cliCommand = [...cliPath, `--option1`, 'whatever', `--option2`, 'whatever']
+      await expect(
+        cli({
+          rootCommandClasses: [TestCommand13],
+          testArguments: [...cliCommand],
+        }),
+      ).rejects.toThrow('Arguments option1 and option2 are mutually exclusive')
     })
   })
 })

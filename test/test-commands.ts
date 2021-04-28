@@ -8,10 +8,10 @@ export class TestCommand13 implements LeafCommand {
   public readonly description = 'This is the testcommand13'
 
   @Option({ key: 'option1', describe: 'Test option1 for TestCommand13' })
-  public option1!: string;
+  public option1!: string
 
   @Option({ key: 'option2', describe: 'Test option2 for TestCommand13' })
-  public option2!: string;
+  public option2!: string
 
   public run(): void {
     console.log(`I'm the testCommand ${this.name}`)
@@ -50,7 +50,7 @@ export class TestCommand10 implements LeafCommand {
   public readonly description = 'This is the testcommand10'
 
   public async run(): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 50))
 
     return new Promise(resolve => {
       console.log(`I'm the testCommand ${this.name}`)
@@ -78,7 +78,7 @@ export class TestCommand8 implements LeafCommand {
   public readonly description = 'This is the testcommand8'
 
   @Option({ key: 'option-test-command-8', describe: 'Test option for TestCommand' })
-  public option1!: string;
+  public option1!: string
 
   public run(): void {
     console.log(`I'm the testCommand ${this.name}. option-test-command-8: ${this.option1}`)
@@ -138,7 +138,7 @@ export class TestCommand3 implements GroupCommand {
 
 export class TestCommand implements GroupCommand {
   @Option({ key: 'test-command-option-1', describe: 'Test option for TestCommand' })
-  public option1!: string;
+  public option1!: string
   public readonly name = 'testCommand'
   public readonly description = 'This is the TestCommand1'
   public readonly aliases = ['tst']

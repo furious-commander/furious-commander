@@ -1,5 +1,5 @@
 module.exports = {
-  extends: ['plugin:@typescript-eslint/recommended'],
+  extends: ['plugin:@typescript-eslint/recommended', 'prettier', 'plugin:prettier/recommended'],
   parserOptions: {
     sourceType: 'module',
     ecmaVersion: 2018,
@@ -13,7 +13,7 @@ module.exports = {
   },
   plugins: ['jest'],
   rules: {
-    'array-bracket-newline': ['error', { multiline: true }],
+    'array-bracket-newline': ['error', 'consistent'],
     strict: ['error', 'safe'],
     curly: 'error',
     'block-scoped-var': 'error',
@@ -42,7 +42,8 @@ module.exports = {
     'max-depth': ['error', 4],
     'require-await': 'error',
     'space-before-function-paren': [
-      'error', {
+      'error',
+      {
         anonymous: 'never',
         named: 'never',
         asyncArrow: 'always',
@@ -63,13 +64,14 @@ module.exports = {
     '@typescript-eslint/no-useless-constructor': 'error',
     '@typescript-eslint/no-unused-expressions': 'error',
     '@typescript-eslint/member-delimiter-style': [
-      'error', {
+      'error',
+      {
         multiline: {
           delimiter: 'none',
           requireLast: true,
         },
         singleline: {
-          delimiter: 'comma',
+          delimiter: 'semi',
           requireLast: false,
         },
       },
