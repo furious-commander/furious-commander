@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src",
+    "test"
+  ],
+  "compilerOptions": {
+    "typeRoots": ["./src/types", "node_modules/@types"],
+    "noEmit": true
+  }
+}

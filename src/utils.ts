@@ -9,7 +9,9 @@ import { Command, InitedCommand } from './command'
  * @returns command instance which corresponding to the last given classname parameter
  */
 export function getCommandInstance(initedCommands: InitedCommand[], commandNames: string[]): Command {
-  if (commandNames.length === 0) throw new Error('There is no commandName parameter passing on the function')
+  if (commandNames.length === 0) {
+    throw new Error('There is no commandName parameter passing on the function')
+  }
   const commandName = commandNames[0]
   commandNames = commandNames.slice(1)
 

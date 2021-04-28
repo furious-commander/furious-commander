@@ -1,4 +1,5 @@
 import cli from '../src'
+import { getCommandInstance } from '../src/utils'
 import {
   TestCommand,
   TestCommand10,
@@ -10,7 +11,6 @@ import {
   TestCommand8,
   TestCommand9,
 } from './test-commands'
-import { getCommandInstance } from '../src/utils'
 
 describe('Test Command classes', () => {
   let consoleMessages: string[] = []
@@ -77,7 +77,7 @@ describe('Test Command classes', () => {
       optionParameters: [
         {
           key: optionKey,
-          describe: 'URL of the EP that I will Command!',
+          description: 'URL of the EP that I will Command!',
           default: optionValue,
         },
       ],
@@ -96,7 +96,7 @@ describe('Test Command classes', () => {
       optionParameters: [
         {
           key: optionKey,
-          describe: 'URL of the EP that I will Command!',
+          description: 'URL of the EP that I will Command!',
         },
       ],
     })
@@ -110,14 +110,19 @@ describe('Test Command classes', () => {
     //also fetch parent command option in leaf command
     const testCommand3OptionValue = 'BUT DO LIKE IN OTHER WAY NOW!'
     const testCommand3OptionKey = 'option-test-command-3'
-    const leafCommandName = 'testCommand9'
     const commandBuilder = await cli({
       rootCommandClasses: [TestCommand],
-      testArguments: ['tst', `testCommand3`, leafCommandName, `--${testCommand3OptionKey}`, testCommand3OptionValue],
+      testArguments: [
+        'testCommand',
+        `testCommand3`,
+        'testCommand9',
+        `--${testCommand3OptionKey}`,
+        testCommand3OptionValue,
+      ],
     })
-    const command: TestCommand9 = commandBuilder.initedCommands[0].subCommands[0].subCommands[1].command as TestCommand9
+    const command: TestCommand9 = commandBuilder.runnable as TestCommand9
 
-    expect(consoleMessages[0]).toBe(`I'm the testCommand ${leafCommandName}`)
+    expect(consoleMessages[0]).toBe(`I'm the testCommand testCommand9`)
     expect(command.optionTestCommand3).toBe(testCommand3OptionValue)
   })
 
@@ -139,10 +144,13 @@ describe('Test Command classes', () => {
       rootCommandClasses: [TestCommand11],
       testArguments: [cliPath[0], cliPath[1], aggregatedArgument1, `--option-test-command-4`],
     })
-    const command: TestCommand12 = getCommandInstance(commandBuilder.initedCommands, cliPath) as TestCommand12
+    getCommandInstance(commandBuilder.initedCommands, cliPath) as TestCommand12
 
+    const command: TestCommand12 = commandBuilder.runnable as TestCommand12
+
+    expect(command.name).toBe('testCommand12')
+    expect(command.aggregatedRelation?.name).toBe('testCommand4')
     expect(consoleMessages[0]).toBe(`I'm the testCommand ${cliPath[1]}`)
-    expect(command.aggregatedRelation.name).toBe('testCommand4')
     expect(consoleMessages[1]).toBe(`Aggregated relation "argument1" value: ${aggregatedArgument1}`)
     expect(consoleMessages[2]).toBe(`Aggregated relation "option1" value: true`)
   })
@@ -173,14 +181,13 @@ describe('Test Command classes', () => {
       expect(consoleMessages[2]).toBe(`Aggregated relation "option2" value: ${cliCommand2[2]}`)
     })
 
-    it('has to throw error when using both params at the same time', async () => {
+    it('has to reject mutually exclusive params', async () => {
       const cliCommand = [...cliPath, `--option1`, 'whatever', `--option2`, 'whatever']
-      await expect(
-        cli({
-          rootCommandClasses: [TestCommand13],
-          testArguments: [...cliCommand],
-        }),
-      ).rejects.toThrow('Arguments option1 and option2 are mutually exclusive')
+      const result = await cli({
+        rootCommandClasses: [TestCommand13],
+        testArguments: [...cliCommand],
+      })
+      expect(result.context).toBe('option1 and option2 are incompatible, please only specify one.')
     })
   })
 })

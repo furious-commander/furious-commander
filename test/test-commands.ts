@@ -1,16 +1,22 @@
-import { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Aggregation } from '../src'
-import { EitherOneParam } from '../src/command'
+import { Aggregation, Argument, ExternalOption, GroupCommand, LeafCommand, Option } from '../src'
 
-@EitherOneParam(['option1', 'option2'])
 export class TestCommand13 implements LeafCommand {
   public readonly name = 'testCommand13'
 
   public readonly description = 'This is the testcommand13'
 
-  @Option({ key: 'option1', describe: 'Test option1 for TestCommand13' })
+  @Option({
+    key: 'option1',
+    description: 'Test option1 for TestCommand13',
+    conflicts: 'option2',
+  })
   public option1!: string
 
-  @Option({ key: 'option2', describe: 'Test option2 for TestCommand13' })
+  @Option({
+    key: 'option2',
+    description: 'Test option2 for TestCommand13',
+    conflicts: 'option1',
+  })
   public option2!: string
 
   public run(): void {
@@ -77,7 +83,10 @@ export class TestCommand8 implements LeafCommand {
 
   public readonly description = 'This is the testcommand8'
 
-  @Option({ key: 'option-test-command-8', describe: 'Test option for TestCommand' })
+  @Option({
+    key: 'option-test-command-8',
+    description: 'Test option for TestCommand',
+  })
   public option1!: string
 
   public run(): void {
@@ -109,10 +118,18 @@ export class TestCommand5 implements LeafCommand {
 }
 
 export class TestCommand4 implements LeafCommand {
-  @Option({ key: 'option-test-command-4', describe: 'test option for TestCommand4', type: 'boolean' })
+  @Option({
+    key: 'option-test-command-4',
+    description: 'test option for TestCommand4',
+    type: 'boolean',
+  })
   public option1!: boolean
 
-  @Argument({ key: 'argument123123', describe: 'test argument for TestCommand4', required: true })
+  @Argument({
+    key: 'argument123123',
+    description: 'test argument for TestCommand4',
+    required: true,
+  })
   public argument1!: string
 
   public readonly name = 'testCommand4'
@@ -132,12 +149,18 @@ export class TestCommand3 implements GroupCommand {
 
   public readonly description = 'This is the testCommand3'
 
-  @Option({ key: 'option-test-command-3', describe: 'option1 key for testCommand3' })
+  @Option({
+    key: 'option-test-command-3',
+    description: 'option1 key for testCommand3',
+  })
   public option1!: string
 }
 
 export class TestCommand implements GroupCommand {
-  @Option({ key: 'test-command-option-1', describe: 'Test option for TestCommand' })
+  @Option({
+    key: 'test-command-option-1',
+    description: 'Test option for TestCommand',
+  })
   public option1!: string
   public readonly name = 'testCommand'
   public readonly description = 'This is the TestCommand1'
@@ -146,7 +169,10 @@ export class TestCommand implements GroupCommand {
 }
 
 export class TestCommand7 implements GroupCommand {
-  @Option({ key: 'option-test-command-7', describe: 'Test option for TestCommand7' })
+  @Option({
+    key: 'option-test-command-7',
+    description: 'Test option for TestCommand7',
+  })
   public vmi!: string
   public readonly name = 'TestCommand7'
   public readonly description = 'This is the testcommand7'

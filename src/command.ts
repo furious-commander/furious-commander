@@ -8,7 +8,7 @@ interface BaseCommand {
  * Groups several LeafCommands
  */
 export interface GroupCommand extends BaseCommand {
-  subCommandClasses: { new(): Command }[]
+  subCommandClasses: { new (): Command }[]
 }
 
 /**
@@ -34,33 +34,4 @@ export function isGroupCommand(command: Command): command is GroupCommand {
 
 export function isLeafCommand(command: Command): command is LeafCommand {
   return Boolean((command as LeafCommand).run)
-}
-
-const eitherOneParamMetadataKey = Symbol("eitherOneParam");
-
-/**
- * It allows only one parameter to use from the given parameters keys (even one of it is required)
- *
- * @param parameterKeys Array of argument/option names which have conflict
- */
-export function EitherOneParam<T extends { new(): BaseCommand }>(parameterKeys: string[]): ClassDecorator {
-  return (target) => {
-    const constructorTarget: T = target as unknown as T
-    let eitherOneParamArray: string[][] | undefined = getEitherOneParam(constructorTarget);
-
-    if(!eitherOneParamArray) eitherOneParamArray = []
-
-    eitherOneParamArray.push(parameterKeys)
-
-    Reflect.defineMetadata(eitherOneParamMetadataKey, eitherOneParamArray, target)
-  };
-}
-
-/**
- * Get the array of group of argument/command/option names which have conflicts
- *
- * @param target Command instance
- */
-export function getEitherOneParam<T extends { new(): BaseCommand }>(target: T): string[][] {
-  return Reflect.getMetadata(eitherOneParamMetadataKey, target);
 }

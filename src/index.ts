@@ -1,56 +1,34 @@
-import initYargs from 'yargs/yargs'
-import { Arguments, Argv } from 'yargs'
-import "reflect-metadata";
-import { isGroupCommand, Command, GroupCommand, LeafCommand, InitedCommand, getEitherOneParam, EitherOneParam } from './command'
-import { IOption, getOption, Option, getExternalOption, ExternalOption } from './option'
-import { IArgument, getArgument, Argument } from './argument';
+import * as Argv from 'cafe-args'
+import 'reflect-metadata'
+import { Aggregation, findFirstAggregration } from './aggregation'
+import { Argument, getArgument, IArgument } from './argument'
+import { Command, GroupCommand, InitedCommand, isGroupCommand, LeafCommand } from './command'
+import { ExternalOption, getExternalOption, getOption, IOption, Option } from './option'
+import { createDefaultPrinter, Printer } from './printer'
 import { getCommandInstance } from './utils'
-import { getAggregation, Aggregation } from './aggregation';
-
-/** native yargs object */
-let yargs = initYargs(process.argv.slice(2))
 
 interface ICli {
   /**
    * Array of the **Root** Command Classes
    */
-  rootCommandClasses: { new(): Command }[]
+  rootCommandClasses: { new (): Command }[]
   /**
-   * Array of the **Root** opions of the CLI
+   * Array of the **Root** options of the CLI
    */
   optionParameters?: IOption[]
   /**
    * test arguments in order to testing the CLI's behaviour
    */
   testArguments?: Array<string>
+  /**
+   * Functions used to print messages to the CLI
+   */
+  printer?: Printer
 }
 
 interface CommandDecoratorData {
   commandOptions: IOption[]
   commandArguments: IArgument[]
-}
-
-interface CommandDecoratorDataWithAggregations extends CommandDecoratorData {
-  commandAggregationRelations: string[][]
-}
-
-function applyOption(option: IOption) {
-  const { key, describe, alias, type = 'string', required, default: defaultValue, choices, coerce, conflicts,implies, config, defaultDescription, deprecated, group, hidden, nargs } = option
-  yargs.option(key, { alias, describe, type, demandOption: required, default: defaultValue, choices, coerce, conflicts,implies,  config, defaultDescription, deprecated, group, hidden, nargs })
-}
-
-const demandOneOfOption: (argv: Arguments, ...options: string[]) => boolean = (argv: Arguments, ...options: string[]) => {
-  const count = options.filter(option => argv[option]).length;
-  const lastOption = options.pop();
-
-  if (count === 0) {
-    throw new Error(`Exactly one of the arguments ${options.join(', ')} and ${lastOption} is required`);
-  }
-  else if (count > 1) {
-    throw new Error(`Arguments ${options.join(', ')} and ${lastOption} are mutually exclusive`);
-  }
-
-  return true;
 }
 
 /**
@@ -59,56 +37,43 @@ const demandOneOfOption: (argv: Arguments, ...options: string[]) => boolean = (a
  * @param target Command instance
  * @returns all decorated metadata of the Command instance
  */
-function getCommandDecoratorData<T extends Command>(target: T): CommandDecoratorDataWithAggregations {
+function getCommandDecoratorData<T extends Command>(target: T): CommandDecoratorData {
   const commandOptions: IOption[] = []
   const commandArguments: IArgument[] = []
-  const commandAggregationRelations: string[][] = []
   // eslint-disable-next-line guard-for-in
-  for(const instanceKey in target) {
+  for (const instanceKey in target) {
     const option = getOption(target, instanceKey)
 
-    if(option) {
+    if (option) {
       commandOptions.push(option)
-
       continue
     }
 
     const argument = getArgument(target, instanceKey)
 
-    if(argument) {
+    if (argument) {
       commandArguments.push(argument)
-    }
-
-    const aggregation = getAggregation(target, instanceKey)
-
-    if(aggregation) {
-      commandAggregationRelations.push(aggregation)
+      continue
     }
   }
 
   return {
     commandOptions,
     commandArguments,
-    commandAggregationRelations,
   }
 }
 
 /**
  * Recursive regard of aggregated relation of the starting command
  * resolves aggregated relations
- * yargs decorators
  *
  * @return
  */
-function getCommandDecoratorFields<T extends Command>(target: T, initedCommands: InitedCommand[], allDecoratorData: CommandDecoratorData) {
-  const commandDecoratorData = getCommandDecoratorData(target);
+function getCommandDecoratorFields<T extends Command>(target: T, allDecoratorData: CommandDecoratorData) {
+  const commandDecoratorData = getCommandDecoratorData(target)
   // add fetched decorator data to the total
   allDecoratorData.commandArguments.push(...commandDecoratorData.commandArguments)
   allDecoratorData.commandOptions.push(...commandDecoratorData.commandOptions)
-  for(const aggregatedRelationPath of commandDecoratorData.commandAggregationRelations) {
-    const aggregatedCommandInstance = getCommandInstance(initedCommands, aggregatedRelationPath)
-    getCommandDecoratorFields(aggregatedCommandInstance, initedCommands, allDecoratorData)
-  }
 }
 
 /**
@@ -116,49 +81,43 @@ function getCommandDecoratorFields<T extends Command>(target: T, initedCommands:
  *
  * @param target Command instance
  * @param options CLI arguments which was mapped to this map object by yargs
- * @param initedCommands in order to get back the aggregated relation instance
  */
-function initCommandFields<T extends Command>(target: T, options: { [key: string]: unknown }, initedCommands: InitedCommand[]) {
+function initCommandFields<T extends Command>(target: T, options: { [key: string]: unknown }) {
   // eslint-disable-next-line guard-for-in
-  for(const instanceKey in target) {
-    const option = getOption(target, instanceKey)
+  for (const key in target) {
+    const option = getOption(target, key)
 
-    if(option) {
-      const { key } = option;
+    if (option) {
+      const value = options[option.key]
 
-      if(options[key]) target[instanceKey] = options[key] as T[Extract<keyof T, string>]
-
+      if (value === undefined) {
+        continue
+      }
+      target[key] = value as T[Extract<keyof T, string>]
       continue
     }
 
-    const externalOptionKey = getExternalOption(target, instanceKey)
+    const externalOptionKey = getExternalOption(target, key)
 
-    if(externalOptionKey) {
-      if(options[externalOptionKey]) target[instanceKey] = options[externalOptionKey] as T[Extract<keyof T, string>]
+    if (externalOptionKey) {
+      const value = options[externalOptionKey]
 
+      if (value === undefined) {
+        continue
+      }
+      target[key] = value as T[Extract<keyof T, string>]
       continue
     }
+    const argument = getArgument(target, key)
 
-    const argument = getArgument(target, instanceKey)
+    if (argument) {
+      const value = options[argument.key]
 
-    if(argument) {
-      const { key } = argument;
-
-      if(options[key]) target[instanceKey] = options[key] as T[Extract<keyof T, string>]
-
+      if (value === undefined) {
+        continue
+      }
+      target[key] = value as T[Extract<keyof T, string>]
       continue
-    }
-
-    const aggregatedRelationCliPath = getAggregation(target, instanceKey)
-
-    if(aggregatedRelationCliPath) {
-      const aggregatedCommandInstance = getCommandInstance(initedCommands, aggregatedRelationCliPath)
-
-      if(!aggregatedCommandInstance) throw new Error(`Does not have available Command with CLI path: ${aggregatedRelationCliPath}`)
-      // recursive set all aggregated relations' feild
-      initCommandFields(aggregatedCommandInstance, options, initedCommands)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      target[instanceKey] = aggregatedCommandInstance as any
     }
   }
 }
@@ -168,116 +127,125 @@ class CommandBuilder {
    * Used for tests as well
    */
   public initedCommands: InitedCommand[]
+  public runnable?: LeafCommand
+  public parser: Argv.Parser
+  public context!: Argv.Context
 
-  public constructor(commandClasses: { new(): Command }[]) {
-    this.initedCommands =  []
+  public constructor(parser: Argv.Parser, argv: string[], commandClasses: { new (): Command }[]) {
+    this.parser = parser
+    this.initedCommands = []
 
-    yargs.demandCommand(1, 'You need at least one command before moving on')
-
-    this.initCommandClasses(commandClasses)
+    this.initCommandClasses(argv, commandClasses)
   }
 
-  private initCommandClasses(commands: { new(): Command }[]) {
-    for(const CommandClass of commands) {
+  private initCommandClasses(argv: string[], commands: { new (): Command }[]) {
+    for (const CommandClass of commands) {
       this.initedCommands.push(this.initCommandClass(CommandClass))
     }
 
-    for(const initedCommand of this.initedCommands) {
-      // if(process.argv.slice(2).includes(initedCommand.command.name)) {
-        this.initCommandClassYargs(initedCommand)
-      // }
+    for (const initedCommand of this.initedCommands) {
+      this.initCommandInstance(this.parser, initedCommand)
     }
+
+    this.context = this.parser.parse(argv)
+
+    if (this.context.exitReason || typeof this.context === 'string' || !this.context.command?.meta?.instance) {
+      return
+    }
+
+    const command = this.context.command.meta.instance as Command
+
+    initCommandFields(command, {
+      ...this.context.options,
+      ...this.context.arguments,
+    })
+
+    if (this.context.sibling) {
+      const key: string = this.context.command.meta.instance.siblingProperty as string
+      const siblingCommand: Command = this.context.sibling.command.meta.instance as Command
+      Reflect.set(command, key, siblingCommand)
+      initCommandFields(this.context.sibling.command.meta.instance as Command, {
+        ...this.context.sibling.options,
+        ...this.context.sibling.arguments,
+      })
+    }
+    this.runnable = this.context.command.meta.instance as LeafCommand
   }
 
-  private initCommandClassYargs(initedCommand: InitedCommand): Argv {
-    const commandInstance = initedCommand.command
-    const commandArguments: IArgument[] = []
-    const commandOptions: IOption[] = []
-    getCommandDecoratorFields(commandInstance, this.initedCommands, { //only for aggregation
+  private createGroup(command: GroupCommand, commandArguments: IArgument[], commandOptions: IOption[]): Argv.Group {
+    const group = new Argv.Group(command.name, command.description)
+    getCommandDecoratorFields(command, {
       commandArguments,
       commandOptions,
     })
+    for (const SubcommandClass of command.subCommandClasses) {
+      const initedSubcommand = new SubcommandClass()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const eitherOneArray = getEitherOneParam((commandInstance as any).constructor)
+      if (isGroupCommand(initedSubcommand)) {
+        const childGroup = this.createGroup(initedSubcommand, [...commandArguments], [...commandOptions])
+        group.withGroup(childGroup)
+      } else {
+        const command = this.createCommand(initedSubcommand, [...commandOptions], [...commandArguments])
+        group.withCommand(command)
+      }
+    }
 
-    //All aggregatedArguments
-    let commandString = `${commandInstance.name}`
-    //commandString build based on command class arguments
-    const requiredArgumentSigns = ['<', '>']
-    const optionalArgumentSigns = ['[', ']']
-    commandArguments
-      .sort((a, b) => {
-        if(a.required) {
-          if(b.required) return 0
-
-          return 1
-        } else if(b.required) return -1
-
-        return 0
-      })
-      .forEach(argument => {
-        const { key, required } =  argument
-        const argumentSigns = required ? requiredArgumentSigns : optionalArgumentSigns
-        commandString += ` ${argumentSigns[0]}${key}${argumentSigns[1]}`
-      })
-
-    return yargs.command({
-      command: commandString,
-      builder: () => {
-        //handle command's options
-        for(const option of commandOptions) {
-          applyOption(option)
-        }
-
-        //handle command's arguments
-        for(const argument of commandArguments) {
-          const { key, required,  default: defaultValue, alias, array, choices, coerce, conflicts, desc, describe, implies, normalize, type } = argument
-          yargs.positional(key, { demandOption: required, default: defaultValue, alias, array, choices, coerce, conflicts, desc, describe, implies, normalize, type })
-        }
-
-        //checks class defined restrictions
-        if(eitherOneArray !== undefined) {
-          for(const eitherOne of eitherOneArray) {
-            yargs.check((argv) => demandOneOfOption(argv, ...eitherOne))
-          }
-        }
-
-        if(!isGroupCommand(commandInstance)) return yargs;
-
-        let subCommandArgs: Argv = yargs
-        for(const subCommandInstance of initedCommand.subCommands) {
-          subCommandArgs = this.initCommandClassYargs(subCommandInstance)
-            .demandCommand(1, 'You need to add one subcommand that listed above')
-        }
-
-        return subCommandArgs
-      },
-      handler: async (args) => {
-        initCommandFields(initedCommand.command, args, this.initedCommands);
-
-        if(!isGroupCommand(commandInstance)) {
-          await commandInstance.run()
-        }
-      },
-      aliases: commandInstance.aliases,
-      describe: `- ${commandInstance.description}`,
-    })
+    return group
   }
 
-  private initCommandClass(CommandClass: {new(): Command}): InitedCommand {
-    const command: Command = new CommandClass();
+  private initCommandInstance(parser: Argv.Parser, initedCommand: InitedCommand): void {
+    const commandInstance = initedCommand.command
+
+    if (isGroupCommand(commandInstance)) {
+      const group = this.createGroup(commandInstance, [], [])
+      parser.addGroup(group)
+    } else {
+      const command = this.createCommand(commandInstance, [], [])
+      parser.addCommand(command)
+    }
+  }
+
+  private initCommandClass(CommandClass: { new (): Command }): InitedCommand {
+    const command: Command = new CommandClass()
     const subCommands: InitedCommand[] = []
 
-    if(isGroupCommand(command)) {
+    if (isGroupCommand(command)) {
       const subCommandClasses = command.subCommandClasses
-      for(const LeafCommandClass of subCommandClasses) {
-        const subCommandClass = this.initCommandClass(LeafCommandClass)
-        subCommands.push(subCommandClass)
+      for (const SubCommandClass of subCommandClasses) {
+        subCommands.push(this.initCommandClass(SubCommandClass))
       }
     }
 
     return { command, subCommands }
+  }
+
+  private getAlias(command: Command): string | undefined {
+    if (command.aliases?.length) {
+      return command.aliases[0]
+    }
+  }
+
+  private createCommand(command: Command, commandOptions: IOption[], commandArguments: IArgument[]): Argv.Command {
+    getCommandDecoratorFields(command, {
+      commandArguments,
+      commandOptions,
+    })
+    const aggregation = findFirstAggregration(command)
+    const commandDefinition = new Argv.Command(command.name, command.description, {
+      sibling: aggregation?.command,
+      alias: this.getAlias(command),
+    })
+    for (const option of commandOptions) {
+      commandDefinition.withOption(option)
+    }
+    for (const argument of commandArguments) {
+      commandDefinition.withPositional(argument)
+    }
+    commandDefinition.meta = {}
+    commandDefinition.meta.instance = command
+    commandDefinition.meta.instance.siblingProperty = aggregation?.property
+
+    return commandDefinition
   }
 }
 
@@ -286,45 +254,36 @@ class CommandBuilder {
  *
  * @param options Initialization parameters for the CLI
  */
-export function cli(options: ICli): Promise<CommandBuilder> {
-  const { rootCommandClasses, optionParameters } = options
+export async function cli(options: ICli): Promise<CommandBuilder> {
+  const { rootCommandClasses, optionParameters, testArguments } = options
+  const printer = options.printer || createDefaultPrinter()
+  const parser = Argv.createParser({ printer })
 
-  if(options.testArguments) {
-    yargs = initYargs()
-    yargs.parse(options.testArguments)
-    yargs.exitProcess(false)
+  if (optionParameters) {
+    for (const option of optionParameters) {
+      parser.addGlobalOption(option)
+    }
+  }
+  const argv: string[] = testArguments || process.argv.slice(2)
+  const builder = new CommandBuilder(parser, argv, rootCommandClasses)
+
+  if (builder.runnable) {
+    try {
+      await builder.runnable.run()
+    } catch (error) {
+      printer.printHeading(printer.formatImportant(printer.getGenericErrorMessage()))
+      printer.print('')
+      printer.printError(error.message)
+    }
   }
 
-  yargs
-  .strict()
-
-  if(optionParameters) optionParameters.forEach(applyOption)
-
-  const commandBuilder = new CommandBuilder(rootCommandClasses)
-
-  return new Promise(resolve => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _ = yargs.onFinishCommand(() => {
-      resolve(commandBuilder)
-    }).argv
-  })
+  return builder
 }
 
-export {
-  GroupCommand,
-  LeafCommand,
-  Argument,
-  ExternalOption,
-  Option,
-  Aggregation,
-  Command,
-  InitedCommand,
-  EitherOneParam,
-}
+export { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Aggregation, Command, InitedCommand, IOption }
 
 export const Utils = {
   isGroupCommand,
-  yargs,
   getCommandInstance,
 }
-export default cli;
+export default cli
