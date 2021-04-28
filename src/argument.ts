@@ -5,10 +5,10 @@ const argumentMetadataKey = Symbol('Argument')
 /**
  * interface for `Argument` decorator
  */
-export interface IArgument<T = string | number | bigint | boolean> {
+export interface IArgument<T = unknown> {
   key: string
   description: string
-  type?: 'string' | 'number' | 'bigint' | 'boolean'
+  type?: string
   alias?: string
   required?: boolean
   default?: T

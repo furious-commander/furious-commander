@@ -5,10 +5,10 @@ const optionMetadataKey = Symbol('Option')
 /**
  * interface for `Option` decorator
  */
-export interface IOption<T = string | number | bigint | boolean> {
+export interface IOption<T = unknown> {
   key: string
   description: string
-  type?: 'string' | 'number' | 'bigint' | 'boolean'
+  type?: string
   alias?: string
   required?: boolean
   default?: T
