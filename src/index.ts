@@ -1,46 +1,34 @@
-import * as Argv from "cafe-args";
-import "reflect-metadata";
-import { Aggregation, findFirstAggregration } from "./aggregation";
-import { Argument, getArgument, IArgument } from "./argument";
-import {
-  Command,
-  GroupCommand,
-  InitedCommand,
-  isGroupCommand,
-  LeafCommand,
-} from "./command";
-import {
-  ExternalOption,
-  getExternalOption,
-  getOption,
-  IOption,
-  Option,
-} from "./option";
-import { createDefaultPrinter, Printer } from "./printer";
-import { getCommandInstance } from "./utils";
+import * as Argv from 'cafe-args'
+import 'reflect-metadata'
+import { Aggregation, findFirstAggregration } from './aggregation'
+import { Argument, getArgument, IArgument } from './argument'
+import { Command, GroupCommand, InitedCommand, isGroupCommand, LeafCommand } from './command'
+import { ExternalOption, getExternalOption, getOption, IOption, Option } from './option'
+import { createDefaultPrinter, Printer } from './printer'
+import { getCommandInstance } from './utils'
 
 interface ICli {
   /**
    * Array of the **Root** Command Classes
    */
-  rootCommandClasses: { new (): Command }[];
+  rootCommandClasses: { new (): Command }[]
   /**
    * Array of the **Root** options of the CLI
    */
-  optionParameters?: IOption[];
+  optionParameters?: IOption[]
   /**
    * test arguments in order to testing the CLI's behaviour
    */
-  testArguments?: Array<string>;
+  testArguments?: Array<string>
   /**
    * Functions used to print messages to the CLI
    */
-  printer?: Printer;
+  printer?: Printer
 }
 
 interface CommandDecoratorData {
-  commandOptions: IOption[];
-  commandArguments: IArgument[];
+  commandOptions: IOption[]
+  commandArguments: IArgument[]
 }
 
 /**
@@ -49,32 +37,30 @@ interface CommandDecoratorData {
  * @param target Command instance
  * @returns all decorated metadata of the Command instance
  */
-function getCommandDecoratorData<T extends Command>(
-  target: T
-): CommandDecoratorData {
-  const commandOptions: IOption[] = [];
-  const commandArguments: IArgument[] = [];
+function getCommandDecoratorData<T extends Command>(target: T): CommandDecoratorData {
+  const commandOptions: IOption[] = []
+  const commandArguments: IArgument[] = []
   // eslint-disable-next-line guard-for-in
   for (const instanceKey in target) {
-    const option = getOption(target, instanceKey);
+    const option = getOption(target, instanceKey)
 
     if (option) {
-      commandOptions.push(option);
-      continue;
+      commandOptions.push(option)
+      continue
     }
 
-    const argument = getArgument(target, instanceKey);
+    const argument = getArgument(target, instanceKey)
 
     if (argument) {
-      commandArguments.push(argument);
-      continue;
+      commandArguments.push(argument)
+      continue
     }
   }
 
   return {
     commandOptions,
     commandArguments,
-  };
+  }
 }
 
 /**
@@ -83,16 +69,11 @@ function getCommandDecoratorData<T extends Command>(
  *
  * @return
  */
-function getCommandDecoratorFields<T extends Command>(
-  target: T,
-  allDecoratorData: CommandDecoratorData
-) {
-  const commandDecoratorData = getCommandDecoratorData(target);
+function getCommandDecoratorFields<T extends Command>(target: T, allDecoratorData: CommandDecoratorData) {
+  const commandDecoratorData = getCommandDecoratorData(target)
   // add fetched decorator data to the total
-  allDecoratorData.commandArguments.push(
-    ...commandDecoratorData.commandArguments
-  );
-  allDecoratorData.commandOptions.push(...commandDecoratorData.commandOptions);
+  allDecoratorData.commandArguments.push(...commandDecoratorData.commandArguments)
+  allDecoratorData.commandOptions.push(...commandDecoratorData.commandOptions)
 }
 
 /**
@@ -101,45 +82,42 @@ function getCommandDecoratorFields<T extends Command>(
  * @param target Command instance
  * @param options CLI arguments which was mapped to this map object by yargs
  */
-function initCommandFields<T extends Command>(
-  target: T,
-  options: { [key: string]: unknown }
-) {
+function initCommandFields<T extends Command>(target: T, options: { [key: string]: unknown }) {
   // eslint-disable-next-line guard-for-in
   for (const key in target) {
-    const option = getOption(target, key);
+    const option = getOption(target, key)
 
     if (option) {
-      const value = options[option.key];
+      const value = options[option.key]
 
       if (value === undefined) {
-        continue;
+        continue
       }
-      target[key] = value as T[Extract<keyof T, string>];
-      continue;
+      target[key] = value as T[Extract<keyof T, string>]
+      continue
     }
 
-    const externalOptionKey = getExternalOption(target, key);
+    const externalOptionKey = getExternalOption(target, key)
 
     if (externalOptionKey) {
-      const value = options[externalOptionKey];
+      const value = options[externalOptionKey]
 
       if (value === undefined) {
-        continue;
+        continue
       }
-      target[key] = value as T[Extract<keyof T, string>];
-      continue;
+      target[key] = value as T[Extract<keyof T, string>]
+      continue
     }
-    const argument = getArgument(target, key);
+    const argument = getArgument(target, key)
 
     if (argument) {
-      const value = options[argument.key];
+      const value = options[argument.key]
 
       if (value === undefined) {
-        continue;
+        continue
       }
-      target[key] = value as T[Extract<keyof T, string>];
-      continue;
+      target[key] = value as T[Extract<keyof T, string>]
+      continue
     }
   }
 }
@@ -148,156 +126,126 @@ class CommandBuilder {
   /**
    * Used for tests as well
    */
-  public initedCommands: InitedCommand[];
-  public runnable?: LeafCommand;
-  public parser: Argv.Parser;
-  public context!: Argv.Context;
+  public initedCommands: InitedCommand[]
+  public runnable?: LeafCommand
+  public parser: Argv.Parser
+  public context!: Argv.Context
 
-  public constructor(
-    parser: Argv.Parser,
-    argv: string[],
-    commandClasses: { new (): Command }[]
-  ) {
-    this.parser = parser;
-    this.initedCommands = [];
+  public constructor(parser: Argv.Parser, argv: string[], commandClasses: { new (): Command }[]) {
+    this.parser = parser
+    this.initedCommands = []
 
-    this.initCommandClasses(argv, commandClasses);
+    this.initCommandClasses(argv, commandClasses)
   }
 
   private initCommandClasses(argv: string[], commands: { new (): Command }[]) {
     for (const CommandClass of commands) {
-      this.initedCommands.push(this.initCommandClass(CommandClass));
+      this.initedCommands.push(this.initCommandClass(CommandClass))
     }
 
     for (const initedCommand of this.initedCommands) {
-      this.initCommandInstance(this.parser, initedCommand);
+      this.initCommandInstance(this.parser, initedCommand)
     }
 
-    this.context = this.parser.parse(argv);
+    this.context = this.parser.parse(argv)
 
-    if (
-      this.context.exitReason ||
-      typeof this.context === "string" ||
-      !this.context.command?.meta?.instance
-    ) {
-      return;
+    if (this.context.exitReason || typeof this.context === 'string' || !this.context.command?.meta?.instance) {
+      return
     }
 
-    const command = this.context.command.meta.instance as Command;
+    const command = this.context.command.meta.instance as Command
 
     initCommandFields(command, {
       ...this.context.options,
       ...this.context.arguments,
-    });
+    })
 
     if (this.context.sibling) {
-      const key: string = this.context.command.meta.instance
-        .siblingProperty as string;
-      const siblingCommand: Command = this.context.sibling.command.meta
-        .instance as Command;
-      Reflect.set(command, key, siblingCommand);
+      const key: string = this.context.command.meta.instance.siblingProperty as string
+      const siblingCommand: Command = this.context.sibling.command.meta.instance as Command
+      Reflect.set(command, key, siblingCommand)
       initCommandFields(this.context.sibling.command.meta.instance as Command, {
         ...this.context.sibling.options,
         ...this.context.sibling.arguments,
-      });
+      })
     }
-    this.runnable = this.context.command.meta.instance as LeafCommand;
+    this.runnable = this.context.command.meta.instance as LeafCommand
   }
 
-  private createGroup(
-    command: GroupCommand,
-    commandArguments: IArgument[],
-    commandOptions: IOption[]
-  ): Argv.Group {
-    const group = new Argv.Group(command.name, command.description);
+  private createGroup(command: GroupCommand, commandArguments: IArgument[], commandOptions: IOption[]): Argv.Group {
+    const group = new Argv.Group(command.name, command.description)
     getCommandDecoratorFields(command, {
       commandArguments,
       commandOptions,
-    });
+    })
     for (const SubcommandClass of command.subCommandClasses) {
-      const initedSubcommand = new SubcommandClass();
+      const initedSubcommand = new SubcommandClass()
 
       if (isGroupCommand(initedSubcommand)) {
-        const childGroup = this.createGroup(
-          initedSubcommand,
-          [...commandArguments],
-          [...commandOptions]
-        );
-        group.withGroup(childGroup);
+        const childGroup = this.createGroup(initedSubcommand, [...commandArguments], [...commandOptions])
+        group.withGroup(childGroup)
       } else {
-        const command = this.createCommand(
-          initedSubcommand,
-          [...commandOptions],
-          [...commandArguments]
-        );
-        group.withCommand(command);
+        const command = this.createCommand(initedSubcommand, [...commandOptions], [...commandArguments])
+        group.withCommand(command)
       }
     }
 
-    return group;
+    return group
   }
 
-  private initCommandInstance(
-    parser: Argv.Parser,
-    initedCommand: InitedCommand
-  ): any {
-    const commandInstance = initedCommand.command;
+  private initCommandInstance(parser: Argv.Parser, initedCommand: InitedCommand): any {
+    const commandInstance = initedCommand.command
 
     if (isGroupCommand(commandInstance)) {
-      const group = this.createGroup(commandInstance, [], []);
-      parser.addGroup(group);
+      const group = this.createGroup(commandInstance, [], [])
+      parser.addGroup(group)
     } else {
-      const command = this.createCommand(commandInstance, [], []);
-      parser.addCommand(command);
+      const command = this.createCommand(commandInstance, [], [])
+      parser.addCommand(command)
     }
   }
 
   private initCommandClass(CommandClass: { new (): Command }): InitedCommand {
-    const command: Command = new CommandClass();
-    const subCommands: InitedCommand[] = [];
+    const command: Command = new CommandClass()
+    const subCommands: InitedCommand[] = []
 
     if (isGroupCommand(command)) {
-      const subCommandClasses = command.subCommandClasses;
+      const subCommandClasses = command.subCommandClasses
       for (const SubCommandClass of subCommandClasses) {
-        subCommands.push(this.initCommandClass(SubCommandClass));
+        subCommands.push(this.initCommandClass(SubCommandClass))
       }
     }
 
-    return { command, subCommands };
+    return { command, subCommands }
   }
 
   private getAlias(command: Command): string | undefined {
     if (command.aliases?.length) {
-      return command.aliases[0];
+      return command.aliases[0]
     }
   }
 
-  private createCommand(
-    command: Command,
-    commandOptions: IOption[],
-    commandArguments: IArgument[]
-  ): Argv.Command {
+  private createCommand(command: Command, commandOptions: IOption[], commandArguments: IArgument[]): Argv.Command {
     getCommandDecoratorFields(command, {
       commandArguments,
       commandOptions,
-    });
-    const aggregation = findFirstAggregration(command);
-    const commandDefinition = new Argv.Command(
-      command.name,
-      command.description,
-      { sibling: aggregation?.command, alias: this.getAlias(command) }
-    );
+    })
+    const aggregation = findFirstAggregration(command)
+    const commandDefinition = new Argv.Command(command.name, command.description, {
+      sibling: aggregation?.command,
+      alias: this.getAlias(command),
+    })
     for (const option of commandOptions) {
-      commandDefinition.withOption(option);
+      commandDefinition.withOption(option)
     }
     for (const argument of commandArguments) {
-      commandDefinition.withPositional(argument);
+      commandDefinition.withPositional(argument)
     }
-    commandDefinition.meta = {};
-    commandDefinition.meta.instance = command;
-    commandDefinition.meta.instance.siblingProperty = aggregation?.property;
+    commandDefinition.meta = {}
+    commandDefinition.meta.instance = command
+    commandDefinition.meta.instance.siblingProperty = aggregation?.property
 
-    return commandDefinition;
+    return commandDefinition
   }
 }
 
@@ -307,47 +255,35 @@ class CommandBuilder {
  * @param options Initialization parameters for the CLI
  */
 export async function cli(options: ICli): Promise<CommandBuilder> {
-  const { rootCommandClasses, optionParameters, testArguments } = options;
-  const printer = options.printer || createDefaultPrinter();
-  const parser = Argv.createParser({ printer });
+  const { rootCommandClasses, optionParameters, testArguments } = options
+  const printer = options.printer || createDefaultPrinter()
+  const parser = Argv.createParser({ printer })
 
   if (optionParameters) {
     for (const option of optionParameters) {
-      parser.addGlobalOption(option);
+      parser.addGlobalOption(option)
     }
   }
-  const argv: string[] = testArguments || process.argv.slice(2);
-  const builder = new CommandBuilder(parser, argv, rootCommandClasses);
+  const argv: string[] = testArguments || process.argv.slice(2)
+  const builder = new CommandBuilder(parser, argv, rootCommandClasses)
 
   if (builder.runnable) {
     try {
-      await builder.runnable.run();
+      await builder.runnable.run()
     } catch (error) {
-      printer.printHeading(
-        printer.formatImportant(printer.getGenericErrorMessage())
-      );
-      printer.print("");
-      printer.printError(error.message);
+      printer.printHeading(printer.formatImportant(printer.getGenericErrorMessage()))
+      printer.print('')
+      printer.printError(error.message)
     }
   }
 
-  return builder;
+  return builder
 }
 
-export {
-  GroupCommand,
-  LeafCommand,
-  Argument,
-  ExternalOption,
-  Option,
-  Aggregation,
-  Command,
-  InitedCommand,
-  IOption,
-};
+export { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Aggregation, Command, InitedCommand, IOption }
 
 export const Utils = {
   isGroupCommand,
   getCommandInstance,
-};
-export default cli;
+}
+export default cli
