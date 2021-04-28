@@ -144,10 +144,12 @@ describe('Test Command classes', () => {
       rootCommandClasses: [TestCommand11],
       testArguments: [cliPath[0], cliPath[1], aggregatedArgument1, `--option-test-command-4`],
     })
-    const command: TestCommand12 = getCommandInstance(commandBuilder.initedCommands, cliPath) as TestCommand12
+    getCommandInstance(commandBuilder.initedCommands, cliPath) as TestCommand12
 
-    expect(commandBuilder.runnable?.name).toBe('testCommand12')
-    expect(commandBuilder.runnable?.aggregatedRelation?.name).toBe('testCommand4')
+    const command: TestCommand12 = commandBuilder.runnable as TestCommand12
+
+    expect(command.name).toBe('testCommand12')
+    expect(command.aggregatedRelation?.name).toBe('testCommand4')
     expect(consoleMessages[0]).toBe(`I'm the testCommand ${cliPath[1]}`)
     expect(consoleMessages[1]).toBe(`Aggregated relation "argument1" value: ${aggregatedArgument1}`)
     expect(consoleMessages[2]).toBe(`Aggregated relation "option1" value: true`)
