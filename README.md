@@ -116,11 +116,7 @@ For instance, `FuriousCommand` has required argument `argument-1`, when calling 
 
 You can see this functionality in action on test `should reach aggregated command fields`.
 
-### Command Class Decorators
-
-You can define decorator on command class definition, which applies globally contrains on the class' arguments and options.
-
-#### Allow only either one param
+### Allow only either one param
 
 It is possible to allow only one parameter of the given option/argument key set.
 This key set consists required parameters for the successful run, but only one of them has to be defined.
