@@ -1,6 +1,6 @@
 # Furious Commander
 
-This is a testable CLI framework, which uses [yargs](http://yargs.js.org/) and [decorators](https://www.typescriptlang.org/docs/handbook/decorators.html). It supports commands in any depth and provides decorators to easily define and use CLI `arguments` and `options`.
+Furious Commander is a testable CLI framework, which uses [decorators](https://www.typescriptlang.org/docs/handbook/decorators.html) and classes to specify commands in any depth and easily define and use CLI `arguments` and `options`.
 
 ## Install
 
@@ -29,7 +29,7 @@ export class TestLeafCommand implements LeafCommand {
   @Option({ key: 'option-test-command-1', describe: 'Test option 1 for TestLeafCommand' })
   public option1!: string
 
-  @Argument({ key: 'argument-1', describe: 'test argument for TestLeafCommand', demandOption: true })
+  @Argument({ key: 'argument-1', describe: 'test argument for TestLeafCommand', required: true })
   public argument1!: string
 
   @ExternalOption('api-url')
@@ -63,7 +63,7 @@ export class TestGroupCommand implements GroupCommand {
 ```
 
 Other "root level" `options` and configuration of the CLI can be passed on the invocation of the `cli` method.
-This method initializes all your passed root Command classes, until its last LeafCommands (and make it available for later) and configure `yargs` based on the passed configuration.
+This method initializes all your passed root Command classes, until its last LeafCommands (and make it available for later).
 For this you can find example in [test/index.spec.ts](test/index.spec.ts)
 
 example for `cli` method call with the command class above:
@@ -126,16 +126,15 @@ It is possible to allow only one parameter of the given option/argument key set.
 This key set consists required parameters for the successful run, but only one of them has to be defined.
 
 ```ts
-@EitherOneParam(['option1', 'option2'])
 export class TestCommand13 implements LeafCommand {
   public readonly name = 'testCommand13'
 
   public readonly description = 'This is the testcommand13'
 
-  @Option({ key: 'option1', describe: 'Test option1 for TestCommand13' })
+  @Option({ key: 'option1', describe: 'Test option1 for TestCommand13', required: true, conflicts: 'option2' })
   public option1!: string;
 
-  @Option({ key: 'option2', describe: 'Test option2 for TestCommand13' })
+  @Option({ key: 'option2', describe: 'Test option2 for TestCommand13', required: true, conflicts: 'option1' })
   public option2!: string;
 
   public run(): void {
