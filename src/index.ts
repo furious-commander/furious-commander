@@ -193,7 +193,7 @@ class CommandBuilder {
     return group
   }
 
-  private initCommandInstance(parser: Argv.Parser, initedCommand: InitedCommand): any {
+  private initCommandInstance(parser: Argv.Parser, initedCommand: InitedCommand): void {
     const commandInstance = initedCommand.command
 
     if (isGroupCommand(commandInstance)) {
