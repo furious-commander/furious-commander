@@ -13,13 +13,7 @@ interface WebpackEnvParams {
 
 const base = (env?: Partial<WebpackEnvParams>): Configuration => {
   const isProduction = env?.mode === 'production'
-  const filename = env?.fileName || [
-    'index',
-    isProduction ? '.min' : null,
-    '.js',
-  ]
-    .filter(Boolean)
-    .join('')
+  const filename = env?.fileName || ['index', isProduction ? '.min' : null, '.js'].filter(Boolean).join('')
   const entry = Path.resolve(__dirname, 'src')
   const path = Path.resolve(__dirname, 'dist')
   const target = 'node'
@@ -111,7 +105,7 @@ export default async (env?: Partial<WebpackEnvParams>): Promise<Configuration> =
 
   if (env?.debug) {
     const config = {
-      ... await base(env),
+      ...(await base(env)),
       plugins: [new BundleAnalyzerPlugin()],
       profile: true,
     }
