@@ -26,10 +26,10 @@ export class TestLeafCommand implements LeafCommand {
 
   public readonly description = 'This is a testcommand'
 
-  @Option({ key: 'option-test-command-1', describe: 'Test option 1 for TestLeafCommand' })
+  @Option({ key: 'option-test-command-1', description: 'Test option 1 for TestLeafCommand' })
   public option1!: string
 
-  @Argument({ key: 'argument-1', describe: 'test argument for TestLeafCommand', required: true })
+  @Argument({ key: 'argument-1', description: 'test argument for TestLeafCommand', required: true })
   public argument1!: string
 
   @ExternalOption('api-url')
@@ -57,7 +57,7 @@ export class TestGroupCommand implements GroupCommand {
 
   public readonly description = 'This is a GroupCommand'
 
-  @Option({ key: 'group-option-1', describe: 'Test option 1 for export class TestGroupCommand' })
+  @Option({ key: 'group-option-1', description: 'Test option 1 for export class TestGroupCommand' })
   public option1!: string
 }
 ```
@@ -74,7 +74,7 @@ const commandBuilder = await cli({
   optionParameters: [
     {
       key: 'api-url',
-      describe: 'URL of the EP that I will Command!',
+      description: 'URL of the EP that I will Command!',
       default: 'http://obedient-service.local',
     },
   ],
@@ -131,10 +131,10 @@ export class TestCommand13 implements LeafCommand {
 
   public readonly description = 'This is the testcommand13'
 
-  @Option({ key: 'option1', describe: 'Test option1 for TestCommand13', required: true, conflicts: 'option2' })
+  @Option({ key: 'option1', description: 'Test option1 for TestCommand13', required: true, conflicts: 'option2' })
   public option1!: string;
 
-  @Option({ key: 'option2', describe: 'Test option2 for TestCommand13', required: true, conflicts: 'option1' })
+  @Option({ key: 'option2', description: 'Test option2 for TestCommand13', required: true, conflicts: 'option1' })
   public option2!: string;
 
   public run(): void {
