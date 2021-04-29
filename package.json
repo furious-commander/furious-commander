@@ -1,6 +1,6 @@
 {
   "name": "furious-commander",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CLI framework with decorators",
   "keywords": [
     "furious-commander",
@@ -27,7 +27,7 @@
     "lint": "eslint --fix \"src/**/*.ts\" \"test/**/*.ts\" && prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "check:lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" && prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "check:types": "tsc --project tsconfig.test.json",
-    "do-publish": "npm run test && npm run check:lint && npm run check:types && npm run compile:prod && npm run compile:types && npm login && npm publish"
+    "do-publish": "npm i && npm run test && npm run check:lint && npm run check:types && npm run compile:prod && npm run compile:types && npm login && npm publish"
   },
   "engines": {
     "node": ">=10.0.0",
