@@ -7,6 +7,10 @@ import { ExternalOption, getExternalOption, getOption, IOption, Option } from '.
 import { createDefaultPrinter, Printer } from './printer'
 import { getCommandInstance } from './utils'
 
+type Sourcemap = Record<string, 'default' | 'env' | 'explicit'>
+
+let sourcemap: Sourcemap = {}
+
 interface ICli {
   /**
    * Array of the **Root** Command Classes
@@ -148,6 +152,7 @@ class CommandBuilder {
     }
 
     this.context = this.parser.parse(argv)
+    sourcemap = this.context.sourcemap
 
     if (this.context.exitReason || typeof this.context === 'string' || !this.context.command?.meta?.instance) {
       return
@@ -280,10 +285,22 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
   return builder
 }
 
-export { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Aggregation, Command, InitedCommand, IOption }
+export {
+  GroupCommand,
+  LeafCommand,
+  Argument,
+  ExternalOption,
+  Option,
+  Aggregation,
+  Command,
+  InitedCommand,
+  IOption,
+  Sourcemap,
+}
 
 export const Utils = {
   isGroupCommand,
   getCommandInstance,
+  getSourcemap: (): Sourcemap => sourcemap,
 }
 export default cli

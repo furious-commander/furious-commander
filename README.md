@@ -141,6 +141,33 @@ export class TestCommand13 implements LeafCommand {
 
 By this setup I cannot call `TestCommand13` with both options `option1` and `option2`, but I have to pass at least one of these.
 
+### Check where the value of an option or argument originates from
+
+Suppose you have an option which has a default value and may also be specified via `process.env`. To indicate this, the option receives the `default` and `envKey` properties.
+
+```ts
+import { Option } from 'furious-commander'
+
+@Option({ key: 'host', description: 'Host', envKey: 'HOST', default: 'http://localhost' })
+public host!: string;
+```
+
+Later on, you may want to know where its value came from - whether it was specified with `--host` explicitly, got its value from `process.env`, or used the default value.
+
+To learn this information, use `Utils.getSourcemap()` after calling the `cli`.
+
+```ts
+import { Utils } from 'furious-commander'
+
+process.env.HOST = '...'
+
+const sourcemap = Utils.getSourcemap()
+
+sourcemap.host // 'env'
+```
+
+`sourcemap[key]` holds values `'explicit'`, `'env'`, `'default'` or `undefined` accordingly.
+
 ## Setup your project
 
 In order to use decorators in your project (until it's not available in vanilla JS) you should use `typescript` with the following configuration:
