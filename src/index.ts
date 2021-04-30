@@ -7,6 +7,8 @@ import { ExternalOption, getExternalOption, getOption, IOption, Option } from '.
 import { createDefaultPrinter, Printer } from './printer'
 import { getCommandInstance } from './utils'
 
+let sourcemap: Record<string, 'default' | 'env' | 'explicit'> = {}
+
 interface ICli {
   /**
    * Array of the **Root** Command Classes
@@ -148,6 +150,7 @@ class CommandBuilder {
     }
 
     this.context = this.parser.parse(argv)
+    sourcemap = this.context.sourcemap
 
     if (this.context.exitReason || typeof this.context === 'string' || !this.context.command?.meta?.instance) {
       return
@@ -285,5 +288,6 @@ export { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Aggregatio
 export const Utils = {
   isGroupCommand,
   getCommandInstance,
+  sourcemap,
 }
 export default cli
