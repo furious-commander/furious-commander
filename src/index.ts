@@ -7,7 +7,9 @@ import { ExternalOption, getExternalOption, getOption, IOption, Option } from '.
 import { createDefaultPrinter, Printer } from './printer'
 import { getCommandInstance } from './utils'
 
-let sourcemap: Record<string, 'default' | 'env' | 'explicit'> = {}
+type Sourcemap = Record<string, 'default' | 'env' | 'explicit'>
+
+let sourcemap: Sourcemap = {}
 
 interface ICli {
   /**
@@ -283,11 +285,22 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
   return builder
 }
 
-export { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Aggregation, Command, InitedCommand, IOption }
+export {
+  GroupCommand,
+  LeafCommand,
+  Argument,
+  ExternalOption,
+  Option,
+  Aggregation,
+  Command,
+  InitedCommand,
+  IOption,
+  Sourcemap,
+}
 
 export const Utils = {
   isGroupCommand,
   getCommandInstance,
-  sourcemap,
+  getSourcemap: (): Sourcemap => sourcemap,
 }
 export default cli
