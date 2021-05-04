@@ -194,21 +194,28 @@ describe('Test Command classes', () => {
 })
 
 describe('printer and application options customise messages', () => {
+  const messages: string[] = []
+
+  beforeAll(() => {
+    console.log = jest.fn(message => messages.push(message))
+  })
+
+  beforeEach(() => {
+    messages.splice(0, messages.length)
+  })
+
   it('should have defaults', async () => {
-    console.log = jest.fn()
     await cli({
       rootCommandClasses: [TestCommand13],
       testArguments: [''],
     })
-    const calls = console.log.mock.calls
-    const tagline = calls[0][0]
-    const heading = calls[2][0]
+    const tagline = messages[0]
+    const heading = messages[2]
     expect(tagline).toBe('Node.js CLI 1.0.0 - Powered by open source technologies')
     expect(heading).toBe('Usage:')
   })
 
   it('should print custom tagline when passing application', async () => {
-    console.log = jest.fn()
     await cli({
       rootCommandClasses: [TestCommand13],
       testArguments: [''],
@@ -219,13 +226,11 @@ describe('printer and application options customise messages', () => {
         version: '0.1.0',
       },
     })
-    const calls = console.log.mock.calls
-    const tagline = calls[0][0]
+    const tagline = messages[0]
     expect(tagline).toBe('Furious Commander Test 0.1.0 - Running inside a test')
   })
 
   it('should print custom headings when passing printer', async () => {
-    console.log = jest.fn()
     await cli({
       rootCommandClasses: [TestCommand13],
       testArguments: [''],
@@ -234,8 +239,7 @@ describe('printer and application options customise messages', () => {
         printHeading: text => console.log('>>> ' + text + ' <<<'),
       },
     })
-    const calls = console.log.mock.calls
-    const heading = calls[2][0]
+    const heading = messages[2]
     expect(heading).toBe('>>> Usage: <<<')
   })
 })
