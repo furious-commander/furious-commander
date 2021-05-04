@@ -67,7 +67,7 @@
     "webpack-cli": "^4.3.0"
   },
   "dependencies": {
-    "cafe-args": "^1.0.8",
+    "cafe-args": "^1.0.9",
     "reflect-metadata": "^0.1.13"
   }
 }

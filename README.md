@@ -168,6 +168,56 @@ sourcemap.host // 'env'
 
 `sourcemap[key]` holds values `'explicit'`, `'env'`, `'default'` or `undefined` accordingly.
 
+### Customised messages
+
+There are two ways to customise the content and style of printed messages: the `application` and `printer` options.
+
+#### Printer
+
+To control how the framework prints help and error messages, implement the `Printer` interface and pass it to `cli`.
+
+The following example uses ANSI escape codes to make important messages bold, dim messages grayed out, and adds `>` and `!` characters before headings and errors respectively.
+
+```ts
+{
+  print: text => console.log(text),
+  printError: text => console.error('! ' + text),
+  printHeading: text => console.log('> ' + text),
+  formatDim: text => '\x1b[2m' + text + '\x1b[0m',
+  formatImportant: text => '\x1b[1m' + text + '\x1b[0m',
+  getGenericErrorMessage: () => 'Failed to run command!',
+}
+```
+
+#### Application
+
+Some messages refer to your application by its name or its command for customised, user friendly messages and usage examples.
+
+This can be controlled by passing an `application` property of interface `Application` when invoking `cli`.
+
+```ts
+{
+  name: 'Furious Commander',
+  command: 'furious-commander',
+  version: '1.0.0',
+  description: 'Powered by furious technologies'
+}
+```
+
+Having done that, *help* will include messages such as these:
+
+```
+Furious Commander 1.0.0 - Powered by furious technologies
+```
+
+and
+
+```
+Usage:
+
+furious-commander http get <url> [OPTIONS]
+```
+
 ## Setup your project
 
 In order to use decorators in your project (until it's not available in vanilla JS) you should use `typescript` with the following configuration:
