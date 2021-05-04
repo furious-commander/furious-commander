@@ -1,6 +1,7 @@
 import * as Argv from 'cafe-args'
 import 'reflect-metadata'
 import { Aggregation, findFirstAggregration } from './aggregation'
+import { Application } from './application'
 import { Argument, getArgument, IArgument } from './argument'
 import { Command, GroupCommand, InitedCommand, isGroupCommand, LeafCommand } from './command'
 import { ExternalOption, getExternalOption, getOption, IOption, Option } from './option'
@@ -28,6 +29,10 @@ interface ICli {
    * Functions used to print messages to the CLI
    */
   printer?: Printer
+  /**
+   * Application metadata for printing customised messages
+   */
+  application?: Application
 }
 
 interface CommandDecoratorData {
@@ -260,9 +265,9 @@ class CommandBuilder {
  * @param options Initialization parameters for the CLI
  */
 export async function cli(options: ICli): Promise<CommandBuilder> {
-  const { rootCommandClasses, optionParameters, testArguments } = options
+  const { rootCommandClasses, optionParameters, testArguments, application } = options
   const printer = options.printer || createDefaultPrinter()
-  const parser = Argv.createParser({ printer })
+  const parser = Argv.createParser({ printer, application })
 
   if (optionParameters) {
     for (const option of optionParameters) {
