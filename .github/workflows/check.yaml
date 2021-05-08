@@ -1,4 +1,4 @@
-name: Tests
+name: Check
 
 on:
   push:
@@ -9,19 +9,17 @@ on:
       - '**'
 
 jobs:
-  nodejs:
+  check:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [12.x, 14.x, 15.x]
+        node-version: [14.x]
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
         with:
-          fetch-depth: 1
-
+          fetch-depth: 0
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
@@ -32,14 +30,23 @@ jobs:
         id: cache-npm
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-${{ matrix.node }}-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.OS }}-node-${{ matrix.node }}-${{ env.cache-name }}-
-            ${{ runner.OS }}-node-${{ matrix.node }}-
+            ${{ runner.OS }}-node-${{ env.cache-name }}-
+            ${{ runner.OS }}-node-
+            ${{ runner.OS }}-
 
       - name: Install npm deps
         if: steps.cache-npm.outputs.cache-hit != 'true'
         run: npm ci
 
-      - name: Run tests
-        run: npm run test
+      - name: Commit linting
+        uses: wagoid/commitlint-github-action@v2
+
+      - name: Code linting
+        run: npm run lint:check
+        env:
+          CI: true
+
+      - name: Check typings
+        run: npm run check:types
