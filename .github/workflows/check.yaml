@@ -44,7 +44,7 @@ jobs:
         uses: wagoid/commitlint-github-action@v2
 
       - name: Code linting
-        run: npm run lint:check
+        run: npm run check:lint
         env:
           CI: true
 
