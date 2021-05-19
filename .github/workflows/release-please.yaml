@@ -14,6 +14,6 @@ jobs:
       - uses: GoogleCloudPlatform/release-please-action@v2
         id: release
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE }}
           release-type: node
           package-name: furious-commander
