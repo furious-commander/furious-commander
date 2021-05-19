@@ -1,6 +1,6 @@
 {
   "name": "furious-commander",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "CLI framework with decorators",
   "keywords": [
     "furious-commander",
