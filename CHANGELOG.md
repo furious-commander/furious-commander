@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.0.7](https://www.github.com/nugaon/furious-commander/compare/v1.0.6...v1.0.7) (2021-05-19)
+
+
+### Bug Fixes
+
+* ci npm publish ([a2ef15f](https://www.github.com/nugaon/furious-commander/commit/a2ef15f49b77474c405fa61549ad634ef27d7494))
+
 ### [1.0.6](https://www.github.com/nugaon/furious-commander/compare/v1.0.0...v1.0.6) (2021-05-19)
 
 
