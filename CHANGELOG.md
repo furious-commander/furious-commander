@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.0.8](https://www.github.com/nugaon/furious-commander/compare/v1.0.7...v1.0.8) (2021-05-19)
+
+
+### Bug Fixes
+
+* ci publish workflow ([cc8e597](https://www.github.com/nugaon/furious-commander/commit/cc8e597c0f96d6fa8a9138402215c453fdede57f))
+
 ### [1.0.7](https://www.github.com/nugaon/furious-commander/compare/v1.0.6...v1.0.7) (2021-05-19)
 
 
