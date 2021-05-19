@@ -13,6 +13,7 @@ export interface IArgument<T = unknown> {
   required?: boolean
   default?: T
   minimum?: number | bigint
+  maximum?: number | bigint
   conflicts?: string
   defaultDescription?: string
   envKey?: string
