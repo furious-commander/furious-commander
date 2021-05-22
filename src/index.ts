@@ -1,4 +1,6 @@
 import * as Argv from 'cafe-args'
+import omelette from 'omelette'
+import { exit } from 'process'
 import 'reflect-metadata'
 import { Aggregation, findFirstAggregration } from './aggregation'
 import { Application } from './application'
@@ -140,14 +142,40 @@ class CommandBuilder {
   public parser: Argv.Parser
   public context!: Argv.Context
 
-  public constructor(parser: Argv.Parser, argv: string[], commandClasses: { new (): Command }[]) {
+  public constructor(parser: Argv.Parser) {
     this.parser = parser
     this.initedCommands = []
-
-    this.initCommandClasses(argv, commandClasses)
   }
 
-  private initCommandClasses(argv: string[], commands: { new (): Command }[]) {
+  private autocomplete(options: ICli): Promise<void> {
+    return new Promise(resolve => {
+      const applicationName = options.application?.command || 'undefined'
+      const completion = omelette(applicationName)
+
+      completion.on('complete', (fragment, { line, reply }) => {
+        const relevantPart = line.slice(applicationName.length + 1)
+        reply(this.parser.suggest(relevantPart))
+      })
+
+      completion.next(() => {
+        resolve()
+      })
+
+      completion.init()
+
+      if (process.argv.find(item => item === '--install-autocomplete')) {
+        completion.setupShellInitFile()
+        exit(0)
+      }
+    })
+  }
+
+  public async initCommandClasses(
+    argv: string[],
+    commands: { new (): Command }[],
+    options: ICli,
+    test: boolean,
+  ): Promise<void> {
     for (const CommandClass of commands) {
       this.initedCommands.push(this.initCommandClass(CommandClass))
     }
@@ -156,7 +184,9 @@ class CommandBuilder {
       this.initCommandInstance(this.parser, initedCommand)
     }
 
-    this.context = this.parser.parse(argv)
+    await this.autocomplete(options)
+
+    this.context = await this.parser.parse(test ? argv : argv.slice(2))
     sourcemap = this.context.sourcemap
 
     if (this.context.exitReason || typeof this.context === 'string' || !this.context.command?.meta?.instance) {
@@ -274,8 +304,13 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
       parser.addGlobalOption(option)
     }
   }
-  const argv: string[] = testArguments || process.argv.slice(2)
-  const builder = new CommandBuilder(parser, argv, rootCommandClasses)
+  const builder = new CommandBuilder(parser)
+  await builder.initCommandClasses(
+    testArguments || process.argv,
+    rootCommandClasses,
+    options,
+    Boolean(testArguments) || false,
+  )
 
   if (builder.runnable) {
     try {
