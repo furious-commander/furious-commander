@@ -17,6 +17,7 @@ export interface IArgument<T = unknown> {
   conflicts?: string
   defaultDescription?: string
   envKey?: string
+  noErrors?: boolean
 }
 
 /**

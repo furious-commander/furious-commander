@@ -18,6 +18,7 @@ export interface IOption<T = unknown> {
   defaultDescription?: string
   handler?: () => void
   envKey?: string
+  noErrors?: boolean
 }
 
 /**
