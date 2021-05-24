@@ -17,7 +17,7 @@ export function autocomplete(parser: Argv.Parser, command: string): Promise<void
 
     completion.init()
 
-    if (process.argv.find(item => item === '--install-autocomplete')) {
+    if (process.argv.includes('--install-autocomplete')) {
       completion.setupShellInitFile()
       exit(0)
     }
