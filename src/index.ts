@@ -169,12 +169,7 @@ class CommandBuilder {
     })
   }
 
-  public async initCommandClasses(
-    argv: string[],
-    commands: { new (): Command }[],
-    options: ICli,
-    test: boolean,
-  ): Promise<void> {
+  public async initCommandClasses(argv: string[], commands: { new (): Command }[], options: ICli): Promise<void> {
     for (const CommandClass of commands) {
       this.initedCommands.push(this.initCommandClass(CommandClass))
     }
@@ -187,7 +182,7 @@ class CommandBuilder {
       await this.autocomplete(options.application?.command)
     }
 
-    this.context = await this.parser.parse(test ? argv : argv.slice(2))
+    this.context = await this.parser.parse(argv)
     sourcemap = this.context.sourcemap
 
     if (this.context.exitReason || typeof this.context === 'string' || !this.context.command?.meta?.instance) {
@@ -306,12 +301,7 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
     }
   }
   const builder = new CommandBuilder(parser)
-  await builder.initCommandClasses(
-    testArguments || process.argv,
-    rootCommandClasses,
-    options,
-    Boolean(testArguments) || false,
-  )
+  await builder.initCommandClasses(testArguments || process.argv.slice(2), rootCommandClasses, options)
 
   if (builder.runnable) {
     try {
