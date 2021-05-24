@@ -1,10 +1,9 @@
 import * as Argv from 'cafe-args'
-import omelette from 'omelette'
-import { exit } from 'process'
 import 'reflect-metadata'
 import { Aggregation, findFirstAggregration } from './aggregation'
 import { Application } from './application'
 import { Argument, getArgument, IArgument } from './argument'
+import { autocomplete } from './autocomplete'
 import { Command, GroupCommand, InitedCommand, isGroupCommand, LeafCommand } from './command'
 import { ExternalOption, getExternalOption, getOption, IOption, Option } from './option'
 import { createDefaultPrinter, Printer } from './printer'
@@ -147,28 +146,6 @@ class CommandBuilder {
     this.initedCommands = []
   }
 
-  private autocomplete(command: string): Promise<void> {
-    return new Promise(resolve => {
-      const completion = omelette(command)
-
-      completion.on('complete', (fragment, { line, reply }) => {
-        const relevantPart = line.slice(command.length + 1)
-        reply(this.parser.suggest(relevantPart))
-      })
-
-      completion.next(() => {
-        resolve()
-      })
-
-      completion.init()
-
-      if (process.argv.find(item => item === '--install-autocomplete')) {
-        completion.setupShellInitFile()
-        exit(0)
-      }
-    })
-  }
-
   public async initCommandClasses(argv: string[], commands: { new (): Command }[], options: ICli): Promise<void> {
     for (const CommandClass of commands) {
       this.initedCommands.push(this.initCommandClass(CommandClass))
@@ -179,7 +156,7 @@ class CommandBuilder {
     }
 
     if (options.application?.command) {
-      await this.autocomplete(options.application?.command)
+      await autocomplete(this.parser, options.application?.command)
     }
 
     this.context = await this.parser.parse(argv)
