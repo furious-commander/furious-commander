@@ -147,13 +147,12 @@ class CommandBuilder {
     this.initedCommands = []
   }
 
-  private autocomplete(options: ICli): Promise<void> {
+  private autocomplete(command: string): Promise<void> {
     return new Promise(resolve => {
-      const applicationName = options.application?.command || 'undefined'
-      const completion = omelette(applicationName)
+      const completion = omelette(command)
 
       completion.on('complete', (fragment, { line, reply }) => {
-        const relevantPart = line.slice(applicationName.length + 1)
+        const relevantPart = line.slice(command.length + 1)
         reply(this.parser.suggest(relevantPart))
       })
 
@@ -184,7 +183,9 @@ class CommandBuilder {
       this.initCommandInstance(this.parser, initedCommand)
     }
 
-    await this.autocomplete(options)
+    if (options.application?.command) {
+      await this.autocomplete(options.application?.command)
+    }
 
     this.context = await this.parser.parse(test ? argv : argv.slice(2))
     sourcemap = this.context.sourcemap
