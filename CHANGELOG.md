@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://www.github.com/nugaon/furious-commander/compare/v1.0.9...v1.1.0) (2021-05-25)
+
+
+### Features
+
+* add autocomplete, noErrors and conflict printing ([#23](https://www.github.com/nugaon/furious-commander/issues/23)) ([20bb6a7](https://www.github.com/nugaon/furious-commander/commit/20bb6a790644ae797150e0812ae1236e313b78d8))
+
 ### [1.0.9](https://www.github.com/nugaon/furious-commander/compare/v1.0.8...v1.0.9) (2021-05-19)
 
 
