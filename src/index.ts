@@ -3,6 +3,7 @@ import 'reflect-metadata'
 import { Aggregation, findFirstAggregration } from './aggregation'
 import { Application } from './application'
 import { Argument, getArgument, IArgument } from './argument'
+import { autocomplete } from './autocomplete'
 import { Command, GroupCommand, InitedCommand, isGroupCommand, LeafCommand } from './command'
 import { ExternalOption, getExternalOption, getOption, IOption, Option } from './option'
 import { createDefaultPrinter, Printer } from './printer'
@@ -140,14 +141,12 @@ class CommandBuilder {
   public parser: Argv.Parser
   public context!: Argv.Context
 
-  public constructor(parser: Argv.Parser, argv: string[], commandClasses: { new (): Command }[]) {
+  public constructor(parser: Argv.Parser) {
     this.parser = parser
     this.initedCommands = []
-
-    this.initCommandClasses(argv, commandClasses)
   }
 
-  private initCommandClasses(argv: string[], commands: { new (): Command }[]) {
+  public async initCommandClasses(argv: string[], commands: { new (): Command }[], options: ICli): Promise<void> {
     for (const CommandClass of commands) {
       this.initedCommands.push(this.initCommandClass(CommandClass))
     }
@@ -156,7 +155,11 @@ class CommandBuilder {
       this.initCommandInstance(this.parser, initedCommand)
     }
 
-    this.context = this.parser.parse(argv)
+    if (options.application?.command) {
+      await autocomplete(this.parser, options.application?.command)
+    }
+
+    this.context = await this.parser.parse(argv)
     sourcemap = this.context.sourcemap
 
     if (this.context.exitReason || typeof this.context === 'string' || !this.context.command?.meta?.instance) {
@@ -274,8 +277,8 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
       parser.addGlobalOption(option)
     }
   }
-  const argv: string[] = testArguments || process.argv.slice(2)
-  const builder = new CommandBuilder(parser, argv, rootCommandClasses)
+  const builder = new CommandBuilder(parser)
+  await builder.initCommandClasses(testArguments || process.argv.slice(2), rootCommandClasses, options)
 
   if (builder.runnable) {
     try {
