@@ -17,6 +17,10 @@ export interface IArgument<T = unknown> {
   conflicts?: string
   defaultDescription?: string
   envKey?: string
+  length?: number
+  minimumLength?: number
+  maximumLength?: number
+  oddLength?: boolean
   noErrors?: boolean
 }
 
