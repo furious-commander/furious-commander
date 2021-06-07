@@ -18,6 +18,10 @@ export interface IOption<T = unknown> {
   defaultDescription?: string
   handler?: () => void
   envKey?: string
+  length?: number
+  minimumLength?: number
+  maximumLength?: number
+  oddLength?: boolean
   noErrors?: boolean
 }
 
