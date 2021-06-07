@@ -220,6 +220,37 @@ Usage:
 furious-commander http get <url> [OPTIONS]
 ```
 
+### Human-Readable Numbers
+
+Numbers and BigInts may be formatted with underscores (`_`) at will for better readability:
+
+```
+--price 100_000_000
+```
+
+Underscores are simply omitted before the parsing cycle. They can appear anywhere and you may have as many of them as you want.
+
+Furthermore, you can use the following shorthand units:
+
+```
+| Unit     | Lower | Upper | Example  |
+|----------|-------|-------|----------|
+| Thousand | k     | K     | 120K     |
+| Million  | m     | M     | 84m      |
+| Billion  | b     | B     | 200_000B |
+| Trillion | t     | T     | 19t      |
+```
+
+### Hex-Strings
+
+There is a built-in `hex-string` type that does the following checks and transformations:
+
+- Ensures only `a-z` and `0-9` characters are given
+- Allows uppercase, but transforms to lowercase
+- Allows `0x` prefix, but omits it
+- Checks for even length, unless `oddLength: true` property is given
+- Obeys `length`, `minimumLength` and `maximumLength` rules
+
 ## Setup your project
 
 In order to use decorators in your project (until it's not available in vanilla JS) you should use `typescript` with the following configuration:
