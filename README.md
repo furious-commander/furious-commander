@@ -245,7 +245,7 @@ Furthermore, you can use the following shorthand units:
 
 There is a built-in `hex-string` type that does the following checks and transformations:
 
-- Ensures only `a-z` and `0-9` characters are given
+- Ensures only `a-f` and `0-9` characters are given
 - Allows uppercase, but transforms to lowercase
 - Allows `0x` prefix, but omits it
 - Checks for even length, unless `oddLength: true` property is given
