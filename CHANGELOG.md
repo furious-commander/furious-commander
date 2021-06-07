@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://www.github.com/nugaon/furious-commander/compare/v1.1.0...v1.2.0) (2021-06-07)
+
+
+### Features
+
+* add numerical units and formatting and hex-string type ([#25](https://www.github.com/nugaon/furious-commander/issues/25)) ([61fc805](https://www.github.com/nugaon/furious-commander/commit/61fc80575e072b77885ba7377b6df8a68c5b3413))
+
 ## [1.1.0](https://www.github.com/nugaon/furious-commander/compare/v1.0.9...v1.1.0) (2021-05-25)
 
 
