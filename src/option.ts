@@ -10,7 +10,7 @@ export interface IOption<T = unknown> {
   description: string
   type?: string
   alias?: string
-  required?: boolean
+  required?: boolean | { when: string } | { unless: string }
   default?: T
   minimum?: number | bigint
   maximum?: number | bigint

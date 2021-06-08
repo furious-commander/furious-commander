@@ -139,7 +139,7 @@ class CommandBuilder {
   public initedCommands: InitedCommand[]
   public runnable?: LeafCommand
   public parser: Argv.Parser
-  public context!: Argv.Context
+  public context!: Argv.Context | string
 
   public constructor(parser: Argv.Parser) {
     this.parser = parser
@@ -159,12 +159,13 @@ class CommandBuilder {
       await autocomplete(this.parser, options.application?.command)
     }
 
-    this.context = await this.parser.parse(argv)
-    sourcemap = this.context.sourcemap
+    this.context = this.parser.parse(argv)
 
-    if (this.context.exitReason || typeof this.context === 'string' || !this.context.command?.meta?.instance) {
+    if (typeof this.context === 'string' || this.context.exitReason || !this.context.command?.meta?.instance) {
       return
     }
+
+    sourcemap = this.context.sourcemap
 
     const command = this.context.command.meta.instance as Command
 

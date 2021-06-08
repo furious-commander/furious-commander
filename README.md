@@ -93,6 +93,18 @@ If you build successfully your cli project (e.g. `#!/usr/bin/env node` presents 
 
 This will invoke the testCommand's (async) `run` method, after its fields initialized by Furious Commander.
 
+### Conditional Required
+
+When an option is required, you can simply specify `{ required: true }` and the parser will print a helpful error message every time the user tries running your application without providing that option.
+
+This may not always be your use-case though. Let's say you have an `--interactive` global option, which enables some features, such as allowing the user to provide a value (for that option) in your application logic, after the parser has run.
+
+For such cases, the `required` property can take `{ when: string }` and `{ unless: string }` values, where the strings represent the dependee keys.
+
+Following the previous example, you may want to specify `{ required: { unless: 'interactive' } }`, and the option will no longer throw error when running with the `--interactive` option (or its alias).
+
+The reverse of this situation when you have these features enabled by default, but your application has a `--silent` or `--quiet` mode, where you do not allow any interactivity and the required options must all be passed beforehand. To indicate this, use `{ required: { when: 'quiet' } }`.
+
 ### Aggregation
 
 The framework support aggregated relations between independent commands.
