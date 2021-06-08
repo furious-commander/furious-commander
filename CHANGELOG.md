@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://www.github.com/nugaon/furious-commander/compare/v1.2.0...v1.3.0) (2021-06-08)
+
+
+### Features
+
+* conditional required property ([#27](https://www.github.com/nugaon/furious-commander/issues/27)) ([c1968d8](https://www.github.com/nugaon/furious-commander/commit/c1968d816b9682650c78ebddfa7ecc811757cd11))
+
 ## [1.2.0](https://www.github.com/nugaon/furious-commander/compare/v1.1.0...v1.2.0) (2021-06-07)
 
 
