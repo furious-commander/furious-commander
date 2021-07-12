@@ -56,7 +56,7 @@ async function generateAutocompletion(command: string): Promise<void> {
   }
   process.stdout.write(EOL)
   process.stdout.write('Append the completion script below to your configuration file to enable autocomplete.' + EOL)
-  process.stdout.write('You may need to source your configuration, or restart your shell, to load the changes.' + EOL)
+  process.stdout.write('You need to source your configuration, or restart your shell, to load the changes.' + EOL)
   process.stdout.write(EOL)
   process.stdout.write(completion.script + EOL)
   exit(0)
