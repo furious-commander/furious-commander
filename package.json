@@ -69,7 +69,6 @@
   },
   "dependencies": {
     "cafe-args": "1.0.22",
-    "omelette": "0.4.15-1",
     "reflect-metadata": "^0.1.13"
   }
 }
