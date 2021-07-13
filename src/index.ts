@@ -155,8 +155,9 @@ class CommandBuilder {
       this.initCommandInstance(this.parser, initedCommand)
     }
 
+    await maybeAutocomplete(argv, this.parser)
+
     if (options.application?.command) {
-      await maybeAutocomplete(argv, options.application.command, this.parser)
       await maybeGenerateAutocompletion(argv, options.application.command)
       await maybeInstallAutocompletion(argv, options.application.command)
     }

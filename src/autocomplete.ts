@@ -14,12 +14,12 @@ interface CompletionInfo {
   pathExists: boolean
 }
 
-export async function maybeAutocomplete(argv: string[], command: string, parser: Argv.Parser): Promise<void> {
+export async function maybeAutocomplete(argv: string[], parser: Argv.Parser): Promise<void> {
   if (!argv.includes(AUTOCOMPLETE_FLAG)) {
     return
   }
   const index = argv.findIndex(x => x === AUTOCOMPLETE_FLAG)
-  await autocomplete(parser, command, argv[index + 1])
+  await autocomplete(parser, argv[index + 1])
 }
 
 export async function maybeGenerateAutocompletion(argv: string[], command: string): Promise<void> {
@@ -36,9 +36,8 @@ export async function maybeInstallAutocompletion(argv: string[], command: string
   await installAutocompletion(command)
 }
 
-async function autocomplete(parser: Argv.Parser, command: string, line: string): Promise<void> {
-  const relevantPart = line.slice(command.length + 1)
-  const suggestions = await parser.suggest(relevantPart)
+async function autocomplete(parser: Argv.Parser, line: string): Promise<void> {
+  const suggestions = await parser.suggest(line, 1)
   for (const suggestion of suggestions) {
     process.stdout.write(suggestion + EOL)
   }
@@ -66,9 +65,11 @@ async function installAutocompletion(command: string): Promise<void> {
   const completion = await getCompletionInfo(command, true)
   process.stdout.write('Your shell is: ' + completion.shell + EOL)
   process.stdout.write('Found configuration file path: ' + completion.path + EOL)
+  process.stdout.write(EOL)
   process.stdout.write('Appending autocomplete script...' + EOL)
   await FS.promises.appendFile(completion.path, EOL + completion.script + EOL)
   process.stdout.write('Installed autocomplete script.' + EOL)
+  process.stdout.write(EOL)
   process.stdout.write('You need to source your configuration, or restart your shell, to load the changes.' + EOL)
   exit(0)
 }
