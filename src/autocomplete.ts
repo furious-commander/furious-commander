@@ -4,6 +4,7 @@ import { EOL } from 'os'
 import { exit } from 'process'
 
 const AUTOCOMPLETE_FLAG = '--compgen'
+const FISH_FLAG = '--compfish'
 const GENERATE_FLAG = '--generate-completion'
 const INSTALL_FLAG = '--install-completion'
 
@@ -19,7 +20,8 @@ export async function maybeAutocomplete(argv: string[], parser: Argv.Parser): Pr
     return
   }
   const index = argv.findIndex(x => x === AUTOCOMPLETE_FLAG)
-  await autocomplete(parser, argv[index + 1])
+  const isFish = argv.some(x => x === FISH_FLAG)
+  await autocomplete(parser, argv[index + 1], isFish)
 }
 
 export async function maybeGenerateAutocompletion(argv: string[], command: string): Promise<void> {
@@ -36,8 +38,8 @@ export async function maybeInstallAutocompletion(argv: string[], command: string
   await installAutocompletion(command)
 }
 
-async function autocomplete(parser: Argv.Parser, line: string): Promise<void> {
-  const suggestions = await parser.suggest(line, 1)
+async function autocomplete(parser: Argv.Parser, line: string, isFish: boolean): Promise<void> {
+  const suggestions = await parser.suggest(line, 1, isFish ? '' : ' ')
   for (const suggestion of suggestions) {
     process.stdout.write(suggestion + EOL)
   }
