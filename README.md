@@ -265,7 +265,7 @@ There is a built-in `hex-string` type that does the following checks and transfo
 
 ### Autocomplete
 
-All commands support autocomplete out of the box. The currently supported shells are `bash`, `zsh` and `fish`. `bash` uses `complete` and `COMPREPLY`, `zsh` uses `compdef` and `compadd`, `fish` uses `complete` (which is different from `zsh` `complete`).
+All commands support autocomplete out of the box. The currently supported shells are `bash`, `zsh` and `fish`. `bash` uses `complete` and `COMPREPLY`, `zsh` uses `compdef` and `compadd`, `fish` uses `complete` (which is different from `bash` `complete`).
 
 If an option or argument should accept and autocomplete a path, add the `autocompletePath` property.
 
