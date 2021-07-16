@@ -3,7 +3,7 @@ import 'reflect-metadata'
 import { Aggregation, findFirstAggregration } from './aggregation'
 import { Application } from './application'
 import { Argument, getArgument, IArgument } from './argument'
-import { maybeAutocomplete, maybeGenerateAutocompletion, maybeInstallAutocompletion } from './autocomplete'
+import { generateAutocompletion, installAutocompletion, maybeAutocomplete } from './autocomplete'
 import { Command, GroupCommand, InitedCommand, isGroupCommand, LeafCommand } from './command'
 import { ExternalOption, getExternalOption, getOption, IOption, Option } from './option'
 import { createDefaultPrinter, Printer } from './printer'
@@ -146,7 +146,7 @@ class CommandBuilder {
     this.initedCommands = []
   }
 
-  public async initCommandClasses(argv: string[], commands: { new (): Command }[], options: ICli): Promise<void> {
+  public async initCommandClasses(argv: string[], commands: { new (): Command }[]): Promise<void> {
     for (const CommandClass of commands) {
       this.initedCommands.push(this.initCommandClass(CommandClass))
     }
@@ -157,12 +157,7 @@ class CommandBuilder {
 
     await maybeAutocomplete(argv, this.parser)
 
-    if (options.application?.command) {
-      await maybeGenerateAutocompletion(argv, options.application.command)
-      await maybeInstallAutocompletion(argv, options.application.command)
-    }
-
-    this.context = this.parser.parse(argv)
+    this.context = await this.parser.parse(argv)
 
     if (typeof this.context === 'string' || this.context.exitReason || !this.context.command?.meta?.instance) {
       return
@@ -276,13 +271,32 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
   const printer = options.printer || createDefaultPrinter()
   const parser = Argv.createParser({ printer, application })
 
+  if (application?.command) {
+    parser.addGlobalOption({
+      key: 'generate-completion',
+      description: 'Generate autocomplete script',
+      type: 'boolean',
+      handler: async () => {
+        await generateAutocompletion(application.command)
+      },
+    })
+    parser.addGlobalOption({
+      key: 'install-completion',
+      description: 'Install autocomplete script',
+      type: 'boolean',
+      handler: async () => {
+        await installAutocompletion(application.command)
+      },
+    })
+  }
+
   if (optionParameters) {
     for (const option of optionParameters) {
       parser.addGlobalOption(option)
     }
   }
   const builder = new CommandBuilder(parser)
-  await builder.initCommandClasses(testArguments || process.argv.slice(2), rootCommandClasses, options)
+  await builder.initCommandClasses(testArguments || process.argv.slice(2), rootCommandClasses)
 
   if (builder.runnable) {
     try {

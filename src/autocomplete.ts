@@ -5,37 +5,22 @@ import { exit } from 'process'
 
 const AUTOCOMPLETE_FLAG = '--compgen'
 const FISH_FLAG = '--compfish'
-const GENERATE_FLAG = '--generate-completion'
-const INSTALL_FLAG = '--install-completion'
 
 interface CompletionInfo {
   shell: Argv.Shell
-  path: string
+  expectedPaths: string[]
+  path: string | null
   script: string
-  pathExists: boolean
 }
 
 export async function maybeAutocomplete(argv: string[], parser: Argv.Parser): Promise<void> {
-  if (!argv.includes(AUTOCOMPLETE_FLAG)) {
-    return
-  }
   const index = argv.findIndex(x => x === AUTOCOMPLETE_FLAG)
-  const isFish = argv.some(x => x === FISH_FLAG)
+
+  if (index === -1) {
+    return
+  }
+  const isFish = argv.includes(FISH_FLAG)
   await autocomplete(parser, argv[index + 1], isFish)
-}
-
-export async function maybeGenerateAutocompletion(argv: string[], command: string): Promise<void> {
-  if (!argv.includes(GENERATE_FLAG)) {
-    return
-  }
-  await generateAutocompletion(command)
-}
-
-export async function maybeInstallAutocompletion(argv: string[], command: string): Promise<void> {
-  if (!argv.includes(INSTALL_FLAG)) {
-    return
-  }
-  await installAutocompletion(command)
 }
 
 async function autocomplete(parser: Argv.Parser, line: string, isFish: boolean): Promise<void> {
@@ -46,11 +31,11 @@ async function autocomplete(parser: Argv.Parser, line: string, isFish: boolean):
   exit(0)
 }
 
-async function generateAutocompletion(command: string): Promise<void> {
+export async function generateAutocompletion(command: string): Promise<void> {
   const completion = await getCompletionInfo(command, false)
   process.stdout.write('Your shell is: ' + completion.shell + EOL)
 
-  if (completion.pathExists) {
+  if (completion.path) {
     process.stdout.write('Found configuration file path: ' + completion.path + EOL)
   } else {
     process.stdout.write('Could not locate your shell configuration path!' + EOL)
@@ -63,8 +48,12 @@ async function generateAutocompletion(command: string): Promise<void> {
   exit(0)
 }
 
-async function installAutocompletion(command: string): Promise<void> {
+export async function installAutocompletion(command: string): Promise<void> {
   const completion = await getCompletionInfo(command, true)
+
+  if (!completion.path) {
+    throw Error('Null shell configuration path')
+  }
   process.stdout.write('Your shell is: ' + completion.shell + EOL)
   process.stdout.write('Found configuration file path: ' + completion.path + EOL)
   process.stdout.write(EOL)
@@ -77,32 +66,35 @@ async function installAutocompletion(command: string): Promise<void> {
 }
 
 async function getCompletionInfo(command: string, strictPath: boolean): Promise<CompletionInfo> {
-  let pathExists = true
   const shellString = getShell()
 
   if (!shellString) {
     handleNullShell()
   }
 
-  const shell = Argv.detectShell(process.env.SHELL || '')
+  const shell = Argv.detectShell(shellString)
 
   if (!shell) {
-    handleUnsupportedShell(process.env.SHELL as string)
+    handleUnsupportedShell(shellString)
   }
 
-  const path = Argv.getShellPath(shell)
+  const expectedPaths = Argv.getShellPaths(shell)
+  let path = null
 
-  if (!(await fileExists(path))) {
-    pathExists = false
-
-    if (strictPath) {
-      handleMissingPath(shell, path)
+  for (const probablePath of expectedPaths) {
+    if (await fileExists(probablePath)) {
+      path = probablePath
+      break
     }
+  }
+
+  if (!path && strictPath) {
+    handleMissingPath(shell, expectedPaths)
   }
 
   const script = Argv.generateCompletion(command, shell)
 
-  return { shell, path, script, pathExists }
+  return { shell, path, expectedPaths, script }
 }
 
 async function fileExists(path: string): Promise<boolean> {
@@ -131,8 +123,11 @@ function handleUnsupportedShell(shell: string): never {
   exit(1)
 }
 
-function handleMissingPath(shell: string, path: string): never {
+function handleMissingPath(shell: string, paths: string[]): never {
   process.stderr.write('Your shell is: ' + shell + EOL)
-  process.stderr.write('Expected configuration file: ' + path + EOL)
+  process.stderr.write('Expected configuration file at any of these locations: ' + EOL)
+  for (const path of paths) {
+    process.stderr.write('  ' + path + EOL)
+  }
   exit(1)
 }
