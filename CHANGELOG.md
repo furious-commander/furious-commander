@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://www.github.com/nugaon/furious-commander/compare/v1.3.0...v1.4.0) (2021-07-16)
+
+
+### Features
+
+* add autocompletion setup ([#29](https://www.github.com/nugaon/furious-commander/issues/29)) ([59a394c](https://www.github.com/nugaon/furious-commander/commit/59a394cf5f861df7d41f2910857ec3bb10351494))
+
 ## [1.3.0](https://www.github.com/nugaon/furious-commander/compare/v1.2.0...v1.3.0) (2021-06-08)
 
 
