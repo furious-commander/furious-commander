@@ -3,4 +3,5 @@ export interface Application {
   command: string
   version: string
   description: string
+  autocompletion?: 'options' | 'commands' | 'disabled'
 }

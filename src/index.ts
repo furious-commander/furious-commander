@@ -1,13 +1,12 @@
 import * as Argv from 'cafe-args'
 import 'reflect-metadata'
-import { Aggregation, findFirstAggregration } from './aggregation'
+import { Aggregation, AggregationData, findFirstAggregration } from './aggregation'
 import { Application } from './application'
-import { Argument, getArgument, IArgument } from './argument'
-import { generateAutocompletion, installAutocompletion, maybeAutocomplete } from './autocomplete'
-import { Command, GroupCommand, InitedCommand, isGroupCommand, LeafCommand } from './command'
-import { ExternalOption, getExternalOption, getOption, IOption, Option } from './option'
+import { Argument, getArgument } from './argument'
+import { addAutocompleteCapabilities, maybeAutocomplete } from './autocomplete'
+import { Command, CommandConstructor, GroupCommand, InitedCommand, isGroupCommand, LeafCommand } from './command'
+import { ExternalOption, getExternalOption, getOption, Option } from './option'
 import { createDefaultPrinter, Printer } from './printer'
-import { getCommandInstance } from './utils'
 
 type Sourcemap = Record<string, 'default' | 'env' | 'explicit'>
 
@@ -17,11 +16,11 @@ interface ICli {
   /**
    * Array of the **Root** Command Classes
    */
-  rootCommandClasses: { new (): Command }[]
+  rootCommandClasses: CommandConstructor[]
   /**
    * Array of the **Root** options of the CLI
    */
-  optionParameters?: IOption[]
+  optionParameters?: Argv.Argument<unknown>[]
   /**
    * test arguments in order to testing the CLI's behaviour
    */
@@ -37,8 +36,8 @@ interface ICli {
 }
 
 interface CommandDecoratorData {
-  commandOptions: IOption[]
-  commandArguments: IArgument[]
+  commandOptions: Argv.Argument[]
+  commandArguments: Argv.Argument[]
 }
 
 /**
@@ -48,8 +47,8 @@ interface CommandDecoratorData {
  * @returns all decorated metadata of the Command instance
  */
 function getCommandDecoratorData<T extends Command>(target: T): CommandDecoratorData {
-  const commandOptions: IOption[] = []
-  const commandArguments: IArgument[] = []
+  const commandOptions: Argv.Argument[] = []
+  const commandArguments: Argv.Argument[] = []
   // eslint-disable-next-line guard-for-in
   for (const instanceKey in target) {
     const option = getOption(target, instanceKey)
@@ -92,44 +91,19 @@ function getCommandDecoratorFields<T extends Command>(target: T, allDecoratorDat
  * @param target Command instance
  * @param options CLI arguments which was mapped to this map object by yargs
  */
-function initCommandFields<T extends Command>(target: T, options: { [key: string]: unknown }) {
+function initCommandFields<T extends LeafCommand>(target: T, options: Record<string, unknown>) {
   // eslint-disable-next-line guard-for-in
-  for (const key in target) {
-    const option = getOption(target, key)
+  for (const field in target) {
+    const key = findKey(target, field)
 
-    if (option) {
-      const value = options[option.key]
-
-      if (value === undefined) {
-        continue
-      }
-      target[key] = value as T[Extract<keyof T, string>]
-      continue
-    }
-
-    const externalOptionKey = getExternalOption(target, key)
-
-    if (externalOptionKey) {
-      const value = options[externalOptionKey]
-
-      if (value === undefined) {
-        continue
-      }
-      target[key] = value as T[Extract<keyof T, string>]
-      continue
-    }
-    const argument = getArgument(target, key)
-
-    if (argument) {
-      const value = options[argument.key]
-
-      if (value === undefined) {
-        continue
-      }
-      target[key] = value as T[Extract<keyof T, string>]
-      continue
+    if (key) {
+      Reflect.set(target, field, options[key])
     }
   }
+}
+
+function findKey<T extends LeafCommand, K extends Extract<keyof T, string>>(target: T, key: K): string | null {
+  return getOption(target, key)?.key || getExternalOption(target, key) || getArgument(target, key)?.key
 }
 
 class CommandBuilder {
@@ -146,26 +120,21 @@ class CommandBuilder {
     this.initedCommands = []
   }
 
-  public async initCommandClasses(argv: string[], commands: { new (): Command }[]): Promise<void> {
-    for (const CommandClass of commands) {
-      this.initedCommands.push(this.initCommandClass(CommandClass))
-    }
-
-    for (const initedCommand of this.initedCommands) {
-      this.initCommandInstance(this.parser, initedCommand)
-    }
+  public async initCommandClasses(argv: string[], rootCommandClasses: CommandConstructor[]): Promise<void> {
+    this.initedCommands = rootCommandClasses.map(x => this.instantiateCommandTree(x))
+    this.initedCommands.forEach(x => this.declareCommand(this.parser, x))
 
     await maybeAutocomplete(argv, this.parser)
 
     this.context = await this.parser.parse(argv)
 
-    if (typeof this.context === 'string' || this.context.exitReason || !this.context.command?.meta?.instance) {
+    if (typeof this.context === 'string' || this.context.exitReason || !this.context.command?.meta) {
       return
     }
 
     sourcemap = this.context.sourcemap
 
-    const command = this.context.command.meta.instance as Command
+    const command = this.context.command.meta as LeafCommand
 
     initCommandFields(command, {
       ...this.context.options,
@@ -173,25 +142,30 @@ class CommandBuilder {
     })
 
     if (this.context.sibling) {
-      const key: string = this.context.command.meta.instance.siblingProperty as string
-      const siblingCommand: Command = this.context.sibling.command.meta.instance as Command
-      Reflect.set(command, key, siblingCommand)
-      initCommandFields(this.context.sibling.command.meta.instance as Command, {
+      const sibling = findFirstAggregration(command) as AggregationData
+      const siblingCommand = this.context.sibling.command.meta as LeafCommand
+      Reflect.set(command, sibling.property, siblingCommand)
+      initCommandFields(siblingCommand, {
         ...this.context.sibling.options,
         ...this.context.sibling.arguments,
       })
     }
-    this.runnable = this.context.command.meta.instance as LeafCommand
+
+    this.runnable = this.context.command.meta as LeafCommand
   }
 
-  private createGroup(command: GroupCommand, commandArguments: IArgument[], commandOptions: IOption[]): Argv.Group {
+  private createGroup(
+    command: GroupCommand,
+    commandArguments: Argv.Argument[],
+    commandOptions: Argv.Argument[],
+  ): Argv.Group {
     const group = new Argv.Group(command.name, command.description)
     getCommandDecoratorFields(command, {
       commandArguments,
       commandOptions,
     })
-    for (const SubcommandClass of command.subCommandClasses) {
-      const initedSubcommand = new SubcommandClass()
+    for (const subcommandClass of command.subCommandClasses) {
+      const initedSubcommand = new subcommandClass()
 
       if (isGroupCommand(initedSubcommand)) {
         const childGroup = this.createGroup(initedSubcommand, [...commandArguments], [...commandOptions])
@@ -205,7 +179,7 @@ class CommandBuilder {
     return group
   }
 
-  private initCommandInstance(parser: Argv.Parser, initedCommand: InitedCommand): void {
+  private declareCommand(parser: Argv.Parser, initedCommand: InitedCommand): void {
     const commandInstance = initedCommand.command
 
     if (isGroupCommand(commandInstance)) {
@@ -217,27 +191,24 @@ class CommandBuilder {
     }
   }
 
-  private initCommandClass(CommandClass: { new (): Command }): InitedCommand {
-    const command: Command = new CommandClass()
-    const subCommands: InitedCommand[] = []
-
-    if (isGroupCommand(command)) {
-      const subCommandClasses = command.subCommandClasses
-      for (const SubCommandClass of subCommandClasses) {
-        subCommands.push(this.initCommandClass(SubCommandClass))
-      }
-    }
+  private instantiateCommandTree(commandClass: CommandConstructor): InitedCommand {
+    const command = new commandClass()
+    const subCommands = isGroupCommand(command) ? this.instantiateSubcommands(command) : []
 
     return { command, subCommands }
   }
 
-  private getAlias(command: Command): string | undefined {
-    if (command.aliases?.length) {
-      return command.aliases[0]
-    }
+  private instantiateSubcommands(instance: GroupCommand): InitedCommand[] {
+    const subCommandClasses = instance.subCommandClasses
+
+    return subCommandClasses.map(x => this.instantiateCommandTree(x))
   }
 
-  private createCommand(command: Command, commandOptions: IOption[], commandArguments: IArgument[]): Argv.Command {
+  private createCommand(
+    command: LeafCommand,
+    commandOptions: Argv.Argument[],
+    commandArguments: Argv.Argument[],
+  ): Argv.Command {
     getCommandDecoratorFields(command, {
       commandArguments,
       commandOptions,
@@ -245,7 +216,7 @@ class CommandBuilder {
     const aggregation = findFirstAggregration(command)
     const commandDefinition = new Argv.Command(command.name, command.description, {
       sibling: aggregation?.command,
-      alias: this.getAlias(command),
+      alias: command.alias,
     })
     for (const option of commandOptions) {
       commandDefinition.withOption(option)
@@ -253,9 +224,7 @@ class CommandBuilder {
     for (const argument of commandArguments) {
       commandDefinition.withPositional(argument)
     }
-    commandDefinition.meta = {}
-    commandDefinition.meta.instance = command
-    commandDefinition.meta.instance.siblingProperty = aggregation?.property
+    commandDefinition.meta = command
 
     return commandDefinition
   }
@@ -271,23 +240,8 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
   const printer = options.printer || createDefaultPrinter()
   const parser = Argv.createParser({ printer, application })
 
-  if (application?.command) {
-    parser.addGlobalOption({
-      key: 'generate-completion',
-      description: 'Generate autocomplete script',
-      type: 'boolean',
-      handler: async () => {
-        await generateAutocompletion(application.command)
-      },
-    })
-    parser.addGlobalOption({
-      key: 'install-completion',
-      description: 'Install autocomplete script',
-      type: 'boolean',
-      handler: async () => {
-        await installAutocompletion(application.command)
-      },
-    })
+  if (application) {
+    addAutocompleteCapabilities(parser, application)
   }
 
   if (optionParameters) {
@@ -311,22 +265,13 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
   return builder
 }
 
-export {
-  GroupCommand,
-  LeafCommand,
-  Argument,
-  ExternalOption,
-  Option,
-  Aggregation,
-  Command,
-  InitedCommand,
-  IOption,
-  Sourcemap,
-}
+export { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Aggregation, Command, InitedCommand, Sourcemap }
+
+export type IOption<T = unknown> = Argv.Argument<T>
+export type IArgument<T = unknown> = Argv.Argument<T>
 
 export const Utils = {
   isGroupCommand,
-  getCommandInstance,
   getSourcemap: (): Sourcemap => sourcemap,
 }
 export default cli

@@ -1,6 +1,5 @@
 import cli from '../src'
 import { createDefaultPrinter } from '../src/printer'
-import { getCommandInstance } from '../src/utils'
 import {
   TestCommand,
   TestCommand10,
@@ -145,7 +144,6 @@ describe('Test Command classes', () => {
       rootCommandClasses: [TestCommand11],
       testArguments: [cliPath[0], cliPath[1], aggregatedArgument1, `--option-test-command-4`],
     })
-    getCommandInstance(commandBuilder.initedCommands, cliPath) as TestCommand12
 
     const command: TestCommand12 = commandBuilder.runnable as TestCommand12
 

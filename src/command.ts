@@ -1,14 +1,21 @@
+/**
+ * Defines the Command classes can implement either Subcommand or GroupCommand
+ */
+export type Command = LeafCommand | GroupCommand
+
+export type CommandConstructor = { new (): Command }
+
 interface BaseCommand {
   readonly name: string
   readonly description: string
-  readonly aliases?: string[]
+  readonly alias?: string
 }
 
 /**
  * Groups several LeafCommands
  */
 export interface GroupCommand extends BaseCommand {
-  subCommandClasses: { new (): Command }[]
+  subCommandClasses: CommandConstructor[]
 }
 
 /**
@@ -17,11 +24,6 @@ export interface GroupCommand extends BaseCommand {
 export interface LeafCommand extends BaseCommand {
   run(): void | Promise<void>
 }
-
-/**
- * Defines the Command classes can implement either Subcommand or GroupCommand
- */
-export type Command = LeafCommand | GroupCommand
 
 export type InitedCommand = {
   command: Command

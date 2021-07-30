@@ -2,6 +2,7 @@ import * as Argv from 'cafe-args'
 import * as FS from 'fs'
 import { EOL } from 'os'
 import { exit } from 'process'
+import { Application } from './application'
 
 const AUTOCOMPLETE_FLAG = '--compgen'
 const FISH_FLAG = '--compfish'
@@ -11,6 +12,34 @@ interface CompletionInfo {
   expectedPaths: string[]
   path: string | null
   script: string
+}
+
+export function addAutocompleteCapabilities(parser: Argv.Parser, application: Application): void {
+  if (application.autocompletion === 'options') {
+    parser.addGlobalOption({
+      key: 'generate-completion',
+      description: 'Generate autocomplete script',
+      type: 'boolean',
+      handler: async () => {
+        await generateAutocompletion(application.command)
+      },
+    })
+    parser.addGlobalOption({
+      key: 'install-completion',
+      description: 'Install autocomplete script',
+      type: 'boolean',
+      handler: async () => {
+        await installAutocompletion(application.command)
+      },
+    })
+  } else if (application.autocompletion === 'commands') {
+    const generateCompletionCommand = new Argv.Command('generate-completion', 'Generate autocomplete script')
+    const installCompletionCommand = new Argv.Command('install-completion', 'Install autocomplete script')
+    generateCompletionCommand.meta = { run: async () => await generateAutocompletion(application.command) }
+    installCompletionCommand.meta = { run: async () => await installAutocompletion(application.command) }
+    parser.addCommand(generateCompletionCommand)
+    parser.addCommand(installCompletionCommand)
+  }
 }
 
 export async function maybeAutocomplete(argv: string[], parser: Argv.Parser): Promise<void> {
