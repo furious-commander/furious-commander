@@ -1,4 +1,4 @@
-import { readdir, stat } from 'fs/promises'
+import { promises } from 'fs'
 
 function filterMatches(entries: string[], start: string) {
   return entries.filter(entry => entry.startsWith(start))
@@ -16,12 +16,12 @@ function parsePath(word: string) {
 
 export async function completePath(word: string): Promise<string[]> {
   const { dir, base } = parsePath(word)
-  const entries = await readdir(dir || '.').catch(() => [])
+  const entries = await promises.readdir(dir || '.').catch(() => [])
   const matches = filterMatches(entries, base)
   const results = []
   for (const match of matches) {
     const path = (dir ? dir + '/' : '') + match
-    const stats = await stat(path)
+    const stats = await promises.stat(path)
     results.push(stats.isDirectory() ? path + '/' : path)
   }
 
