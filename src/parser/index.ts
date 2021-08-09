@@ -20,8 +20,7 @@ import {
 } from './print'
 import { detectShell, generateCompletion, getShellPaths } from './shell'
 import { suggest } from './suggest'
-import { Argument, Command, Group } from './type'
-import { Application, Context, ParsedContext, Parser, Printer } from './types'
+import { Application, Argument, Command, Context, Group, ParsedContext, Parser, Printer } from './type'
 
 function findOptionTargets(context: ParsedContext, option: Argument): Record<string, unknown>[] {
   if (option.global) {

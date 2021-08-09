@@ -1,5 +1,4 @@
-import { Argument, Command, Group } from './type'
-import { Application, Printer } from './types'
+import { Application, Argument, Command, Group, Printer } from './type'
 
 const BOLD = '\x1b[1m'
 const DIM = '\x1b[2m'
