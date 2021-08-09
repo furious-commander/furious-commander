@@ -2,6 +2,7 @@
   "compilerOptions": {
     "alwaysStrict": true,
     "target": "ES6",
+    "lib": ["es2019"],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
@@ -9,10 +10,7 @@
     "strict": true,
     "resolveJsonModule": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
+    "emitDecoratorMetadata": true
   },
-  "exclude": [
-      "dist",
-      "node_modules"
-  ]
+  "exclude": ["dist", "node_modules"]
 }

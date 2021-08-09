@@ -1,4 +1,3 @@
-import * as Argv from 'cafe-args'
 import 'reflect-metadata'
 import { Aggregation, AggregationData, findFirstAggregration } from './aggregation'
 import { Application } from './application'
@@ -6,6 +5,7 @@ import { Argument, getArgument } from './argument'
 import { addAutocompleteCapabilities, maybeAutocomplete } from './autocomplete'
 import { Command, CommandConstructor, GroupCommand, InitedCommand, isGroupCommand, LeafCommand } from './command'
 import { ExternalOption, getExternalOption, getOption, Option } from './option'
+import * as Parser from './parser/index'
 import { createDefaultPrinter, Printer } from './printer'
 
 type Sourcemap = Record<string, 'default' | 'env' | 'explicit'>
@@ -20,7 +20,7 @@ interface ICli {
   /**
    * Array of the **Root** options of the CLI
    */
-  optionParameters?: Argv.Argument<unknown>[]
+  optionParameters?: Parser.Argument<unknown>[]
   /**
    * test arguments in order to testing the CLI's behaviour
    */
@@ -36,8 +36,8 @@ interface ICli {
 }
 
 interface CommandDecoratorData {
-  commandOptions: Argv.Argument[]
-  commandArguments: Argv.Argument[]
+  commandOptions: Parser.Argument[]
+  commandArguments: Parser.Argument[]
 }
 
 /**
@@ -47,8 +47,8 @@ interface CommandDecoratorData {
  * @returns all decorated metadata of the Command instance
  */
 function getCommandDecoratorData<T extends Command>(target: T): CommandDecoratorData {
-  const commandOptions: Argv.Argument[] = []
-  const commandArguments: Argv.Argument[] = []
+  const commandOptions: Parser.Argument[] = []
+  const commandArguments: Parser.Argument[] = []
   // eslint-disable-next-line guard-for-in
   for (const instanceKey in target) {
     const option = getOption(target, instanceKey)
@@ -112,10 +112,10 @@ class CommandBuilder {
    */
   public initedCommands: InitedCommand[]
   public runnable?: LeafCommand
-  public parser: Argv.Parser
-  public context!: Argv.Context | string
+  public parser: Parser.Parser
+  public context!: Parser.Context | string | { exitReason: string }
 
-  public constructor(parser: Argv.Parser) {
+  public constructor(parser: Parser.Parser) {
     this.parser = parser
     this.initedCommands = []
   }
@@ -128,13 +128,17 @@ class CommandBuilder {
 
     this.context = await this.parser.parse(argv)
 
-    if (typeof this.context === 'string' || this.context.exitReason || !this.context.command?.meta) {
+    if (typeof this.context === 'string' || 'exitReason' in this.context) {
+      return
+    }
+
+    if (!this.context.command) {
       return
     }
 
     sourcemap = this.context.sourcemap
 
-    const command = this.context.command.meta as LeafCommand
+    const command = this.context.command.leafCommand
 
     initCommandFields(command, {
       ...this.context.options,
@@ -143,7 +147,7 @@ class CommandBuilder {
 
     if (this.context.sibling) {
       const sibling = findFirstAggregration(command) as AggregationData
-      const siblingCommand = this.context.sibling.command.meta as LeafCommand
+      const siblingCommand = this.context.sibling.command.leafCommand
       Reflect.set(command, sibling.property, siblingCommand)
       initCommandFields(siblingCommand, {
         ...this.context.sibling.options,
@@ -151,15 +155,15 @@ class CommandBuilder {
       })
     }
 
-    this.runnable = this.context.command.meta as LeafCommand
+    this.runnable = this.context.command.leafCommand
   }
 
   private createGroup(
     command: GroupCommand,
-    commandArguments: Argv.Argument[],
-    commandOptions: Argv.Argument[],
-  ): Argv.Group {
-    const group = new Argv.Group(command.name, command.description)
+    commandArguments: Parser.Argument[],
+    commandOptions: Parser.Argument[],
+  ): Parser.Group {
+    const group = new Parser.Group(command.name, command.description)
     getCommandDecoratorFields(command, {
       commandArguments,
       commandOptions,
@@ -179,7 +183,7 @@ class CommandBuilder {
     return group
   }
 
-  private declareCommand(parser: Argv.Parser, initedCommand: InitedCommand): void {
+  private declareCommand(parser: Parser.Parser, initedCommand: InitedCommand): void {
     const commandInstance = initedCommand.command
 
     if (isGroupCommand(commandInstance)) {
@@ -206,15 +210,15 @@ class CommandBuilder {
 
   private createCommand(
     command: LeafCommand,
-    commandOptions: Argv.Argument[],
-    commandArguments: Argv.Argument[],
-  ): Argv.Command {
+    commandOptions: Parser.Argument[],
+    commandArguments: Parser.Argument[],
+  ): Parser.Command {
     getCommandDecoratorFields(command, {
       commandArguments,
       commandOptions,
     })
     const aggregation = findFirstAggregration(command)
-    const commandDefinition = new Argv.Command(command.name, command.description, {
+    const commandDefinition = new Parser.Command(command.name, command.description, command, {
       sibling: aggregation?.command,
       alias: command.alias,
     })
@@ -224,7 +228,6 @@ class CommandBuilder {
     for (const argument of commandArguments) {
       commandDefinition.withPositional(argument)
     }
-    commandDefinition.meta = command
 
     return commandDefinition
   }
@@ -238,7 +241,7 @@ class CommandBuilder {
 export async function cli(options: ICli): Promise<CommandBuilder> {
   const { rootCommandClasses, optionParameters, testArguments, application } = options
   const printer = options.printer || createDefaultPrinter()
-  const parser = Argv.createParser({ printer, application })
+  const parser = Parser.createParser({ printer, application })
 
   if (application) {
     addAutocompleteCapabilities(parser, application)
@@ -267,8 +270,8 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
 
 export { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Aggregation, Command, InitedCommand, Sourcemap }
 
-export type IOption<T = unknown> = Argv.Argument<T>
-export type IArgument<T = unknown> = Argv.Argument<T>
+export type IOption<T = unknown> = Parser.Argument<T>
+export type IArgument<T = unknown> = Parser.Argument<T>
 
 export const Utils = {
   isGroupCommand,

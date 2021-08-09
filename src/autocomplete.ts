@@ -1,20 +1,20 @@
-import * as Argv from 'cafe-args'
 import * as FS from 'fs'
 import { EOL } from 'os'
 import { exit } from 'process'
 import { Application } from './application'
+import * as Parser from './parser'
 
 const AUTOCOMPLETE_FLAG = '--compgen'
 const FISH_FLAG = '--compfish'
 
 interface CompletionInfo {
-  shell: Argv.Shell
+  shell: string
   expectedPaths: string[]
   path: string | null
   script: string
 }
 
-export function addAutocompleteCapabilities(parser: Argv.Parser, application: Application): void {
+export function addAutocompleteCapabilities(parser: Parser.Parser, application: Application): void {
   if (application.autocompletion === 'options') {
     parser.addGlobalOption({
       key: 'generate-completion',
@@ -33,16 +33,24 @@ export function addAutocompleteCapabilities(parser: Argv.Parser, application: Ap
       },
     })
   } else if (application.autocompletion === 'commands') {
-    const generateCompletionCommand = new Argv.Command('generate-completion', 'Generate autocomplete script')
-    const installCompletionCommand = new Argv.Command('install-completion', 'Install autocomplete script')
-    generateCompletionCommand.meta = { run: async () => await generateAutocompletion(application.command) }
-    installCompletionCommand.meta = { run: async () => await installAutocompletion(application.command) }
-    parser.addCommand(generateCompletionCommand)
-    parser.addCommand(installCompletionCommand)
+    parser.addCommand(
+      new Parser.Command('generate-completion', 'Generate autocomplete script', {
+        name: 'generate-completion',
+        description: 'Generate autocomplete script',
+        run: async () => await generateAutocompletion(application.command),
+      }),
+    )
+    parser.addCommand(
+      new Parser.Command('install-completion', 'Install autocomplete script', {
+        name: 'install-completion',
+        description: 'Install autocomplete script',
+        run: async () => await installAutocompletion(application.command),
+      }),
+    )
   }
 }
 
-export async function maybeAutocomplete(argv: string[], parser: Argv.Parser): Promise<void> {
+export async function maybeAutocomplete(argv: string[], parser: Parser.Parser): Promise<void> {
   const index = argv.findIndex(x => x === AUTOCOMPLETE_FLAG)
 
   if (index === -1) {
@@ -52,7 +60,7 @@ export async function maybeAutocomplete(argv: string[], parser: Argv.Parser): Pr
   await autocomplete(parser, argv[index + 1], isFish)
 }
 
-async function autocomplete(parser: Argv.Parser, line: string, isFish: boolean): Promise<void> {
+async function autocomplete(parser: Parser.Parser, line: string, isFish: boolean): Promise<void> {
   const suggestions = await parser.suggest(line, 1, isFish ? '' : ' ')
   for (const suggestion of suggestions) {
     process.stdout.write(suggestion + EOL)
@@ -101,13 +109,13 @@ async function getCompletionInfo(command: string, strictPath: boolean): Promise<
     handleNullShell()
   }
 
-  const shell = Argv.detectShell(shellString)
+  const shell = Parser.detectShell(shellString)
 
   if (!shell) {
     handleUnsupportedShell(shellString)
   }
 
-  const expectedPaths = Argv.getShellPaths(shell)
+  const expectedPaths: string[] = Parser.getShellPaths(shell) as string[]
   let path = null
 
   for (const probablePath of expectedPaths) {
@@ -121,7 +129,7 @@ async function getCompletionInfo(command: string, strictPath: boolean): Promise<
     handleMissingPath(shell, expectedPaths)
   }
 
-  const script = Argv.generateCompletion(command, shell)
+  const script: string = Parser.generateCompletion(command, shell) as string
 
   return { shell, path, expectedPaths, script }
 }

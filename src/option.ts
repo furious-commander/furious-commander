@@ -1,5 +1,5 @@
-import * as Argv from 'cafe-args'
 import { Command } from './command'
+import * as Parser from './parser'
 
 const optionMetadataKey = Symbol('Option')
 
@@ -8,7 +8,7 @@ const optionMetadataKey = Symbol('Option')
  *
  * @param options IOption object, which defines the option of the command
  */
-export function Option(options: Argv.Argument): PropertyDecorator {
+export function Option(options: Parser.Argument): PropertyDecorator {
   return Reflect.metadata(optionMetadataKey, options)
 }
 
@@ -21,7 +21,7 @@ export function Option(options: Argv.Argument): PropertyDecorator {
 export function getOption<T extends Command, K extends Extract<keyof T, string>>(
   target: T,
   propertyKey: K,
-): Argv.Argument {
+): Parser.Argument {
   return Reflect.getMetadata(optionMetadataKey, target, propertyKey)
 }
 
