@@ -18,7 +18,6 @@ coverage
 .lock-wscript
 
 dist
-test-data
 
 # Dependency directory
 node_modules

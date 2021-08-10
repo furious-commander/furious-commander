@@ -4,8 +4,10 @@
  */
 import type { Config } from '@jest/types'
 
+
 export default (): Config.InitialOptions => {
   return {
+
     // Indicates whether the coverage information should be collected while executing the test
     // collectCoverage: false,
 
@@ -13,24 +15,24 @@ export default (): Config.InitialOptions => {
     coverageDirectory: 'coverage',
 
     // An array of regexp pattern strings used to skip coverage collection
-    coveragePathIgnorePatterns: ['/node_modules/'],
+    coveragePathIgnorePatterns: ["/node_modules/"],
 
     // An array of directory names to be searched recursively up from the requiring module's location
-    moduleDirectories: ['node_modules'],
+    moduleDirectories: ["node_modules"],
 
     // Run tests from one or more projects
-    projects: ([
+    projects: [
       {
         displayName: 'node',
         testEnvironment: 'node',
-        testRegex: '.*\\.spec\\.[jt]s',
+        testRegex: '.*\\.spec\\.ts',
       },
-    ] as unknown[]) as string[], // bad types
+    ] as unknown[] as string[], // bad types
 
     // The root directory that Jest should scan for tests and modules within
     rootDir: 'test',
 
     // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
-    testPathIgnorePatterns: ['/node_modules/'],
+    testPathIgnorePatterns: ["/node_modules/"],
   }
 }
