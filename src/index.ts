@@ -1,11 +1,12 @@
+import * as Fury from 'fury'
+import { GroupCommand, LeafCommand } from 'fury'
 import 'reflect-metadata'
 import { Aggregation, AggregationData, findFirstAggregration } from './aggregation'
 import { Application } from './application'
 import { Argument, getArgument } from './argument'
 import { addAutocompleteCapabilities, maybeAutocomplete } from './autocomplete'
-import { Command, CommandConstructor, GroupCommand, InitedCommand, isGroupCommand, LeafCommand } from './command'
+import { Command, InitedCommand, isGroupCommand } from './command'
 import { ExternalOption, getExternalOption, getOption, Option } from './option'
-import * as Parser from './parser/index'
 import { createDefaultPrinter, Printer } from './printer'
 
 type Sourcemap = Record<string, 'default' | 'env' | 'explicit'>
@@ -16,11 +17,11 @@ interface ICli {
   /**
    * Array of the **Root** Command Classes
    */
-  rootCommandClasses: CommandConstructor[]
+  rootCommandClasses: Fury.CommandConstructor[]
   /**
    * Array of the **Root** options of the CLI
    */
-  optionParameters?: Parser.Argument<unknown>[]
+  optionParameters?: Fury.Argument<unknown>[]
   /**
    * test arguments in order to testing the CLI's behaviour
    */
@@ -36,8 +37,8 @@ interface ICli {
 }
 
 interface CommandDecoratorData {
-  commandOptions: Parser.Argument[]
-  commandArguments: Parser.Argument[]
+  commandOptions: Fury.Argument[]
+  commandArguments: Fury.Argument[]
 }
 
 /**
@@ -47,8 +48,8 @@ interface CommandDecoratorData {
  * @returns all decorated metadata of the Command instance
  */
 function getCommandDecoratorData<T extends Command>(target: T): CommandDecoratorData {
-  const commandOptions: Parser.Argument[] = []
-  const commandArguments: Parser.Argument[] = []
+  const commandOptions: Fury.Argument[] = []
+  const commandArguments: Fury.Argument[] = []
   // eslint-disable-next-line guard-for-in
   for (const instanceKey in target) {
     const option = getOption(target, instanceKey)
@@ -112,15 +113,15 @@ class CommandBuilder {
    */
   public initedCommands: InitedCommand[]
   public runnable?: LeafCommand
-  public parser: Parser.Parser
-  public context!: Parser.Context | string | { exitReason: string }
+  public parser: Fury.Parser
+  public context!: Fury.Context | string | { exitReason: string }
 
-  public constructor(parser: Parser.Parser) {
+  public constructor(parser: Fury.Parser) {
     this.parser = parser
     this.initedCommands = []
   }
 
-  public async initCommandClasses(argv: string[], rootCommandClasses: CommandConstructor[]): Promise<void> {
+  public async initCommandClasses(argv: string[], rootCommandClasses: Fury.CommandConstructor[]): Promise<void> {
     this.initedCommands = rootCommandClasses.map(x => this.instantiateCommandTree(x))
     this.initedCommands.forEach(x => this.declareCommand(this.parser, x))
 
@@ -160,10 +161,10 @@ class CommandBuilder {
 
   private createGroup(
     command: GroupCommand,
-    commandArguments: Parser.Argument[],
-    commandOptions: Parser.Argument[],
-  ): Parser.Group {
-    const group = new Parser.Group(command.name, command.description)
+    commandArguments: Fury.Argument[],
+    commandOptions: Fury.Argument[],
+  ): Fury.Group {
+    const group = new Fury.Group(command.name, command.description)
     getCommandDecoratorFields(command, {
       commandArguments,
       commandOptions,
@@ -183,7 +184,7 @@ class CommandBuilder {
     return group
   }
 
-  private declareCommand(parser: Parser.Parser, initedCommand: InitedCommand): void {
+  private declareCommand(parser: Fury.Parser, initedCommand: InitedCommand): void {
     const commandInstance = initedCommand.command
 
     if (isGroupCommand(commandInstance)) {
@@ -195,7 +196,7 @@ class CommandBuilder {
     }
   }
 
-  private instantiateCommandTree(commandClass: CommandConstructor): InitedCommand {
+  private instantiateCommandTree(commandClass: Fury.CommandConstructor): InitedCommand {
     const command = new commandClass()
     const subCommands = isGroupCommand(command) ? this.instantiateSubcommands(command) : []
 
@@ -210,15 +211,15 @@ class CommandBuilder {
 
   private createCommand(
     command: LeafCommand,
-    commandOptions: Parser.Argument[],
-    commandArguments: Parser.Argument[],
-  ): Parser.Command {
+    commandOptions: Fury.Argument[],
+    commandArguments: Fury.Argument[],
+  ): Fury.Command {
     getCommandDecoratorFields(command, {
       commandArguments,
       commandOptions,
     })
     const aggregation = findFirstAggregration(command)
-    const commandDefinition = new Parser.Command(command.name, command.description, command, {
+    const commandDefinition = new Fury.Command(command.name, command.description, command, {
       sibling: aggregation?.command,
       alias: command.alias,
     })
@@ -241,7 +242,7 @@ class CommandBuilder {
 export async function cli(options: ICli): Promise<CommandBuilder> {
   const { rootCommandClasses, optionParameters, testArguments, application } = options
   const printer = options.printer || createDefaultPrinter()
-  const parser = Parser.createParser({ printer, application })
+  const parser = Fury.createParser({ printer, application })
 
   if (application) {
     addAutocompleteCapabilities(parser, application)
@@ -270,8 +271,8 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
 
 export { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Aggregation, Command, InitedCommand, Sourcemap }
 
-export type IOption<T = unknown> = Parser.Argument<T>
-export type IArgument<T = unknown> = Parser.Argument<T>
+export type IOption<T = unknown> = Fury.Argument<T>
+export type IArgument<T = unknown> = Fury.Argument<T>
 
 export const Utils = {
   isGroupCommand,

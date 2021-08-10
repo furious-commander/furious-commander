@@ -1,8 +1,8 @@
 import * as FS from 'fs'
+import * as Fury from 'fury'
 import { EOL } from 'os'
 import { exit } from 'process'
 import { Application } from './application'
-import * as Parser from './parser'
 
 const AUTOCOMPLETE_FLAG = '--compgen'
 const FISH_FLAG = '--compfish'
@@ -14,7 +14,7 @@ interface CompletionInfo {
   script: string
 }
 
-export function addAutocompleteCapabilities(parser: Parser.Parser, application: Application): void {
+export function addAutocompleteCapabilities(parser: Fury.Parser, application: Application): void {
   if (application.autocompletion === 'options') {
     parser.addGlobalOption({
       key: 'generate-completion',
@@ -34,14 +34,14 @@ export function addAutocompleteCapabilities(parser: Parser.Parser, application: 
     })
   } else if (application.autocompletion === 'commands') {
     parser.addCommand(
-      new Parser.Command('generate-completion', 'Generate autocomplete script', {
+      new Fury.Command('generate-completion', 'Generate autocomplete script', {
         name: 'generate-completion',
         description: 'Generate autocomplete script',
         run: async () => await generateAutocompletion(application.command),
       }),
     )
     parser.addCommand(
-      new Parser.Command('install-completion', 'Install autocomplete script', {
+      new Fury.Command('install-completion', 'Install autocomplete script', {
         name: 'install-completion',
         description: 'Install autocomplete script',
         run: async () => await installAutocompletion(application.command),
@@ -50,7 +50,7 @@ export function addAutocompleteCapabilities(parser: Parser.Parser, application: 
   }
 }
 
-export async function maybeAutocomplete(argv: string[], parser: Parser.Parser): Promise<void> {
+export async function maybeAutocomplete(argv: string[], parser: Fury.Parser): Promise<void> {
   const index = argv.findIndex(x => x === AUTOCOMPLETE_FLAG)
 
   if (index === -1) {
@@ -60,7 +60,7 @@ export async function maybeAutocomplete(argv: string[], parser: Parser.Parser): 
   await autocomplete(parser, argv[index + 1], isFish)
 }
 
-async function autocomplete(parser: Parser.Parser, line: string, isFish: boolean): Promise<void> {
+async function autocomplete(parser: Fury.Parser, line: string, isFish: boolean): Promise<void> {
   const suggestions = await parser.suggest(line, 1, isFish ? '' : ' ')
   for (const suggestion of suggestions) {
     process.stdout.write(suggestion + EOL)
@@ -109,13 +109,13 @@ async function getCompletionInfo(command: string, strictPath: boolean): Promise<
     handleNullShell()
   }
 
-  const shell = Parser.detectShell(shellString)
+  const shell = Fury.detectShell(shellString)
 
   if (!shell) {
     handleUnsupportedShell(shellString)
   }
 
-  const expectedPaths: string[] = Parser.getShellPaths(shell) as string[]
+  const expectedPaths: string[] = Fury.getShellPaths(shell) as string[]
   let path = null
 
   for (const probablePath of expectedPaths) {
@@ -129,7 +129,7 @@ async function getCompletionInfo(command: string, strictPath: boolean): Promise<
     handleMissingPath(shell, expectedPaths)
   }
 
-  const script: string = Parser.generateCompletion(command, shell) as string
+  const script: string = Fury.generateCompletion(command, shell) as string
 
   return { shell, path, expectedPaths, script }
 }
