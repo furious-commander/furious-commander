@@ -65,6 +65,7 @@
     "webpack-cli": "^4.3.0"
   },
   "dependencies": {
+    "madlad": "^1.0.0-rc.0",
     "reflect-metadata": "^0.1.13"
   }
 }

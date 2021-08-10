@@ -1,5 +1,5 @@
-import * as Fury from 'fury'
-import { GroupCommand, LeafCommand } from 'fury'
+import * as Madlad from 'madlad'
+import { GroupCommand, LeafCommand } from 'madlad'
 import 'reflect-metadata'
 import { Aggregation, AggregationData, findFirstAggregration } from './aggregation'
 import { Application } from './application'
@@ -17,11 +17,11 @@ interface ICli {
   /**
    * Array of the **Root** Command Classes
    */
-  rootCommandClasses: Fury.CommandConstructor[]
+  rootCommandClasses: Madlad.CommandConstructor[]
   /**
    * Array of the **Root** options of the CLI
    */
-  optionParameters?: Fury.Argument<unknown>[]
+  optionParameters?: Madlad.Argument<unknown>[]
   /**
    * test arguments in order to testing the CLI's behaviour
    */
@@ -37,8 +37,8 @@ interface ICli {
 }
 
 interface CommandDecoratorData {
-  commandOptions: Fury.Argument[]
-  commandArguments: Fury.Argument[]
+  commandOptions: Madlad.Argument[]
+  commandArguments: Madlad.Argument[]
 }
 
 /**
@@ -48,8 +48,8 @@ interface CommandDecoratorData {
  * @returns all decorated metadata of the Command instance
  */
 function getCommandDecoratorData<T extends Command>(target: T): CommandDecoratorData {
-  const commandOptions: Fury.Argument[] = []
-  const commandArguments: Fury.Argument[] = []
+  const commandOptions: Madlad.Argument[] = []
+  const commandArguments: Madlad.Argument[] = []
   // eslint-disable-next-line guard-for-in
   for (const instanceKey in target) {
     const option = getOption(target, instanceKey)
@@ -113,15 +113,15 @@ class CommandBuilder {
    */
   public initedCommands: InitedCommand[]
   public runnable?: LeafCommand
-  public parser: Fury.Parser
-  public context!: Fury.Context | string | { exitReason: string }
+  public parser: Madlad.Parser
+  public context!: Madlad.Context | string | { exitReason: string }
 
-  public constructor(parser: Fury.Parser) {
+  public constructor(parser: Madlad.Parser) {
     this.parser = parser
     this.initedCommands = []
   }
 
-  public async initCommandClasses(argv: string[], rootCommandClasses: Fury.CommandConstructor[]): Promise<void> {
+  public async initCommandClasses(argv: string[], rootCommandClasses: Madlad.CommandConstructor[]): Promise<void> {
     this.initedCommands = rootCommandClasses.map(x => this.instantiateCommandTree(x))
     this.initedCommands.forEach(x => this.declareCommand(this.parser, x))
 
@@ -161,10 +161,10 @@ class CommandBuilder {
 
   private createGroup(
     command: GroupCommand,
-    commandArguments: Fury.Argument[],
-    commandOptions: Fury.Argument[],
-  ): Fury.Group {
-    const group = new Fury.Group(command.name, command.description)
+    commandArguments: Madlad.Argument[],
+    commandOptions: Madlad.Argument[],
+  ): Madlad.Group {
+    const group = new Madlad.Group(command.name, command.description)
     getCommandDecoratorFields(command, {
       commandArguments,
       commandOptions,
@@ -184,7 +184,7 @@ class CommandBuilder {
     return group
   }
 
-  private declareCommand(parser: Fury.Parser, initedCommand: InitedCommand): void {
+  private declareCommand(parser: Madlad.Parser, initedCommand: InitedCommand): void {
     const commandInstance = initedCommand.command
 
     if (isGroupCommand(commandInstance)) {
@@ -196,7 +196,7 @@ class CommandBuilder {
     }
   }
 
-  private instantiateCommandTree(commandClass: Fury.CommandConstructor): InitedCommand {
+  private instantiateCommandTree(commandClass: Madlad.CommandConstructor): InitedCommand {
     const command = new commandClass()
     const subCommands = isGroupCommand(command) ? this.instantiateSubcommands(command) : []
 
@@ -211,15 +211,15 @@ class CommandBuilder {
 
   private createCommand(
     command: LeafCommand,
-    commandOptions: Fury.Argument[],
-    commandArguments: Fury.Argument[],
-  ): Fury.Command {
+    commandOptions: Madlad.Argument[],
+    commandArguments: Madlad.Argument[],
+  ): Madlad.Command {
     getCommandDecoratorFields(command, {
       commandArguments,
       commandOptions,
     })
     const aggregation = findFirstAggregration(command)
-    const commandDefinition = new Fury.Command(command.name, command.description, command, {
+    const commandDefinition = new Madlad.Command(command.name, command.description, command, {
       sibling: aggregation?.command,
       alias: command.alias,
     })
@@ -242,7 +242,7 @@ class CommandBuilder {
 export async function cli(options: ICli): Promise<CommandBuilder> {
   const { rootCommandClasses, optionParameters, testArguments, application } = options
   const printer = options.printer || createDefaultPrinter()
-  const parser = Fury.createParser({ printer, application })
+  const parser = Madlad.createParser({ printer, application })
 
   if (application) {
     addAutocompleteCapabilities(parser, application)
@@ -271,8 +271,8 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
 
 export { GroupCommand, LeafCommand, Argument, ExternalOption, Option, Aggregation, Command, InitedCommand, Sourcemap }
 
-export type IOption<T = unknown> = Fury.Argument<T>
-export type IArgument<T = unknown> = Fury.Argument<T>
+export type IOption<T = unknown> = Madlad.Argument<T>
+export type IArgument<T = unknown> = Madlad.Argument<T>
 
 export const Utils = {
   isGroupCommand,

@@ -1,5 +1,5 @@
 import * as FS from 'fs'
-import * as Fury from 'fury'
+import * as Madlad from 'madlad'
 import { EOL } from 'os'
 import { exit } from 'process'
 import { Application } from './application'
@@ -14,7 +14,7 @@ interface CompletionInfo {
   script: string
 }
 
-export function addAutocompleteCapabilities(parser: Fury.Parser, application: Application): void {
+export function addAutocompleteCapabilities(parser: Madlad.Parser, application: Application): void {
   if (application.autocompletion === 'options') {
     parser.addGlobalOption({
       key: 'generate-completion',
@@ -34,14 +34,14 @@ export function addAutocompleteCapabilities(parser: Fury.Parser, application: Ap
     })
   } else if (application.autocompletion === 'commands') {
     parser.addCommand(
-      new Fury.Command('generate-completion', 'Generate autocomplete script', {
+      new Madlad.Command('generate-completion', 'Generate autocomplete script', {
         name: 'generate-completion',
         description: 'Generate autocomplete script',
         run: async () => await generateAutocompletion(application.command),
       }),
     )
     parser.addCommand(
-      new Fury.Command('install-completion', 'Install autocomplete script', {
+      new Madlad.Command('install-completion', 'Install autocomplete script', {
         name: 'install-completion',
         description: 'Install autocomplete script',
         run: async () => await installAutocompletion(application.command),
@@ -50,7 +50,7 @@ export function addAutocompleteCapabilities(parser: Fury.Parser, application: Ap
   }
 }
 
-export async function maybeAutocomplete(argv: string[], parser: Fury.Parser): Promise<void> {
+export async function maybeAutocomplete(argv: string[], parser: Madlad.Parser): Promise<void> {
   const index = argv.findIndex(x => x === AUTOCOMPLETE_FLAG)
 
   if (index === -1) {
@@ -60,7 +60,7 @@ export async function maybeAutocomplete(argv: string[], parser: Fury.Parser): Pr
   await autocomplete(parser, argv[index + 1], isFish)
 }
 
-async function autocomplete(parser: Fury.Parser, line: string, isFish: boolean): Promise<void> {
+async function autocomplete(parser: Madlad.Parser, line: string, isFish: boolean): Promise<void> {
   const suggestions = await parser.suggest(line, 1, isFish ? '' : ' ')
   for (const suggestion of suggestions) {
     process.stdout.write(suggestion + EOL)
@@ -109,13 +109,13 @@ async function getCompletionInfo(command: string, strictPath: boolean): Promise<
     handleNullShell()
   }
 
-  const shell = Fury.detectShell(shellString)
+  const shell = Madlad.detectShell(shellString)
 
   if (!shell) {
     handleUnsupportedShell(shellString)
   }
 
-  const expectedPaths: string[] = Fury.getShellPaths(shell) as string[]
+  const expectedPaths: string[] = Madlad.getShellPaths(shell) as string[]
   let path = null
 
   for (const probablePath of expectedPaths) {
@@ -129,7 +129,7 @@ async function getCompletionInfo(command: string, strictPath: boolean): Promise<
     handleMissingPath(shell, expectedPaths)
   }
 
-  const script: string = Fury.generateCompletion(command, shell) as string
+  const script: string = Madlad.generateCompletion(command, shell) as string
 
   return { shell, path, expectedPaths, script }
 }
