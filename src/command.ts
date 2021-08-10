@@ -1,4 +1,4 @@
-import { GroupCommand, LeafCommand } from 'fury'
+import { GroupCommand, LeafCommand } from 'madlad'
 
 export type Command = LeafCommand | GroupCommand
 
