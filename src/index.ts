@@ -307,12 +307,13 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
       await builder.runnable.run()
     } catch (error) {
       if (options.errorHandler) {
-        await options.errorHandler(error)
-      } else {
-        printer.printHeading(printer.formatImportant(printer.getGenericErrorMessage()))
-        printer.print('')
-        printer.printError(error.message)
+        options.errorHandler(error)
+
+        return builder
       }
+      printer.printHeading(printer.formatImportant(printer.getGenericErrorMessage()))
+      printer.print('')
+      printer.printError(error.message)
     }
   }
 
