@@ -1,6 +1,6 @@
 # Furious Commander
 
-[![Tests](https://github.com/nugaon/furious-commander/actions/workflows/test.yaml/badge.svg)](https://github.com/nugaon/furious-commander/actions/workflows/test.yaml)
+[![Tests](https://github.com/furious-commander/furious-commander/actions/workflows/test.yaml/badge.svg)](https://github.com/furious-commander/furious-commander/actions/workflows/test.yaml)
 
 Furious Commander is a testable CLI framework, which uses [decorators](https://www.typescriptlang.org/docs/handbook/decorators.html) and classes to specify commands in any depth and easily define and use CLI `arguments` and `options`.
 

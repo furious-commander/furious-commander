@@ -9,15 +9,15 @@
     "yargs",
     "nugaon"
   ],
-  "homepage": "https://github.com/nugaon/furious-commander",
+  "homepage": "https://github.com/furious-commander/furious-commander",
   "bugs": {
-    "url": "https://github.com/nugaon/furious-commander/issues/"
+    "url": "https://github.com/furious-commander/furious-commander/issues/"
   },
   "license": "MIT",
   "main": "dist/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nugaon/furious-commander.git"
+    "url": "https://github.com/furious-commander/furious-commander.git"
   },
   "scripts": {
     "compile": "webpack --progress --mode development",
