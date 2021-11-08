@@ -186,7 +186,7 @@ describe('Test Command classes', () => {
         rootCommandClasses: [TestCommand13],
         testArguments: [...cliCommand],
       })
-      expect(result.context).toBe('option1 and option2 are incompatible, please only specify one.')
+      expect(result.context).toBe('[option1] and [option2] are incompatible, please only specify one')
     })
   })
 })
