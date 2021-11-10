@@ -34,6 +34,10 @@ interface ICli {
    * Application metadata for printing customised messages
    */
   application?: Application
+  /**
+   * Called when an uncaught exception is thrown from the run method of the command
+   */
+  errorHandler?: (error: unknown) => void | Promise<void>
 }
 
 interface CommandDecoratorData {
@@ -256,6 +260,11 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
     try {
       await builder.runnable.run()
     } catch (error) {
+      if (options.errorHandler) {
+        options.errorHandler(error)
+
+        return builder
+      }
       printer.printHeading(printer.formatImportant(printer.getGenericErrorMessage()))
       printer.print('')
       printer.printError(error.message)

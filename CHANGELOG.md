@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://www.github.com/furious-commander/furious-commander/compare/v1.4.0...v1.5.0) (2021-09-09)
+
+
+### Features
+
+* add custom error handler ([#36](https://www.github.com/furious-commander/furious-commander/issues/36)) ([ebff30f](https://www.github.com/furious-commander/furious-commander/commit/ebff30f0d6d990507574b5c0987b609606214727))
+
 ## [1.4.0](https://www.github.com/nugaon/furious-commander/compare/v1.3.0...v1.4.0) (2021-07-16)
 
 
