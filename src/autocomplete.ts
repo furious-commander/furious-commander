@@ -1,5 +1,6 @@
 import * as FS from 'fs'
 import * as Madlad from 'madlad'
+import type { Shell } from 'madlad/lib/shell'
 import { EOL } from 'os'
 import { exit } from 'process'
 import { Application } from './application'
@@ -8,14 +9,14 @@ const AUTOCOMPLETE_FLAG = '--compgen'
 const FISH_FLAG = '--compfish'
 
 interface CompletionInfo {
-  shell: string
-  expectedPaths: string[]
+  shell: Shell
+  possibleShellPaths: string[] | null
   path: string | null
-  script: string
+  script: string | null
 }
 
 export function addAutocompleteCapabilities(parser: Madlad.Parser, application: Application): void {
-  if (application.autocompletion === 'options') {
+  if (application.autocompletion === 'fromOption') {
     parser.addGlobalOption({
       key: 'generate-completion',
       description: 'Generate autocomplete script',
@@ -32,7 +33,7 @@ export function addAutocompleteCapabilities(parser: Madlad.Parser, application: 
         await installAutocompletion(application.command)
       },
     })
-  } else if (application.autocompletion === 'commands') {
+  } else if (application.autocompletion === 'fromCommand') {
     parser.addCommand(
       new Madlad.Command('generate-completion', 'Generate autocomplete script', {
         name: 'generate-completion',
@@ -115,23 +116,25 @@ async function getCompletionInfo(command: string, strictPath: boolean): Promise<
     handleUnsupportedShell(shellString)
   }
 
-  const expectedPaths: string[] = Madlad.getShellPaths(shell) as string[]
+  const possibleShellPaths = Madlad.getShellPaths(shell)
   let path = null
 
-  for (const probablePath of expectedPaths) {
-    if (await fileExists(probablePath)) {
-      path = probablePath
-      break
+  if (possibleShellPaths) {
+    for (const possibleShellPath of possibleShellPaths) {
+      if (await fileExists(possibleShellPath)) {
+        path = possibleShellPath
+        break
+      }
     }
   }
 
-  if (!path && strictPath) {
-    handleMissingPath(shell, expectedPaths)
+  if (!path && strictPath && possibleShellPaths) {
+    handleMissingPath(shell, possibleShellPaths)
   }
 
-  const script: string = Madlad.generateCompletion(command, shell) as string
+  const script = Madlad.generateCompletion(command, shell)
 
-  return { shell, path, expectedPaths, script }
+  return { shell, path, possibleShellPaths, script }
 }
 
 async function fileExists(path: string): Promise<boolean> {

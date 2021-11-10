@@ -3,5 +3,12 @@ export interface Application {
   command: string
   version: string
   description: string
-  autocompletion?: 'options' | 'commands' | 'disabled'
+  /**
+   * Determines how the end user can generate autocompletion scripts.
+   *
+   * `fromOption`: Adds a global option: `--generate-completion`
+   *
+   * `fromCommand`: Adds a top level command: `generate-completion`
+   */
+  autocompletion?: 'fromOption' | 'fromCommand' | 'disabled'
 }

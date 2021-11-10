@@ -1,6 +1,7 @@
 import { GroupCommand, LeafCommand } from 'madlad'
 
-export type Command = LeafCommand | GroupCommand
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type Command = (LeafCommand & Partial<{ [key: string]: any }>) | (GroupCommand & Partial<{ [key: string]: any }>)
 
 export type InitedCommand = {
   command: Command

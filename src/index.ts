@@ -37,8 +37,8 @@ interface ICli {
 }
 
 interface CommandDecoratorData {
-  commandOptions: Madlad.Argument[]
-  commandArguments: Madlad.Argument[]
+  commandOptions: Madlad.Argument<unknown>[]
+  commandArguments: Madlad.Argument<unknown>[]
 }
 
 /**
@@ -129,11 +129,7 @@ class CommandBuilder {
 
     this.context = await this.parser.parse(argv)
 
-    if (typeof this.context === 'string' || 'exitReason' in this.context) {
-      return
-    }
-
-    if (!this.context.command) {
+    if (typeof this.context === 'string' || 'exitReason' in this.context || !this.context.command) {
       return
     }
 
@@ -169,8 +165,8 @@ class CommandBuilder {
       commandArguments,
       commandOptions,
     })
-    for (const subcommandClass of command.subCommandClasses) {
-      const initedSubcommand = new subcommandClass()
+    for (const SubcommandClass of command.subCommandClasses) {
+      const initedSubcommand = new SubcommandClass()
 
       if (isGroupCommand(initedSubcommand)) {
         const childGroup = this.createGroup(initedSubcommand, [...commandArguments], [...commandOptions])
