@@ -1,8 +1,7 @@
 /* eslint-disable no-console */
 import Path from 'path'
-import { DefinePlugin, Configuration, WebpackPluginInstance } from 'webpack'
-import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer'
 import TerserPlugin from 'terser-webpack-plugin'
+import { Configuration, DefinePlugin, WebpackPluginInstance } from 'webpack'
 import PackageJson from './package.json'
 
 interface WebpackEnvParams {
@@ -106,7 +105,6 @@ export default async (env?: Partial<WebpackEnvParams>): Promise<Configuration> =
   if (env?.debug) {
     const config = {
       ...(await base(env)),
-      plugins: [new BundleAnalyzerPlugin()],
       profile: true,
     }
 

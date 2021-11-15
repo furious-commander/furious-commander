@@ -1,27 +1,7 @@
-interface BaseCommand {
-  readonly name: string
-  readonly description: string
-  readonly aliases?: string[]
-}
+import { GroupCommand, LeafCommand } from 'madlad'
 
-/**
- * Groups several LeafCommands
- */
-export interface GroupCommand extends BaseCommand {
-  subCommandClasses: { new (): Command }[]
-}
-
-/**
- * CLI Command Classes, which actually do something important
- */
-export interface LeafCommand extends BaseCommand {
-  run(): void | Promise<void>
-}
-
-/**
- * Defines the Command classes can implement either Subcommand or GroupCommand
- */
-export type Command = LeafCommand | GroupCommand
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type Command = (LeafCommand & Partial<{ [key: string]: any }>) | (GroupCommand & Partial<{ [key: string]: any }>)
 
 export type InitedCommand = {
   command: Command

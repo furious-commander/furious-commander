@@ -1,19 +1,57 @@
-import * as Argv from 'cafe-args'
 import * as FS from 'fs'
+import * as Madlad from 'madlad'
+import type { Shell } from 'madlad/lib/shell'
 import { EOL } from 'os'
 import { exit } from 'process'
+import { Application } from './application'
 
 const AUTOCOMPLETE_FLAG = '--compgen'
 const FISH_FLAG = '--compfish'
 
 interface CompletionInfo {
-  shell: Argv.Shell
-  expectedPaths: string[]
+  shell: Shell
+  possibleShellPaths: string[] | null
   path: string | null
-  script: string
+  script: string | null
 }
 
-export async function maybeAutocomplete(argv: string[], parser: Argv.Parser): Promise<void> {
+export function addAutocompleteCapabilities(parser: Madlad.Parser, application: Application): void {
+  if (application.autocompletion === 'fromOption') {
+    parser.addGlobalOption({
+      key: 'generate-completion',
+      description: 'Generate autocomplete script',
+      type: 'boolean',
+      handler: async () => {
+        await generateAutocompletion(application.command)
+      },
+    })
+    parser.addGlobalOption({
+      key: 'install-completion',
+      description: 'Install autocomplete script',
+      type: 'boolean',
+      handler: async () => {
+        await installAutocompletion(application.command)
+      },
+    })
+  } else if (application.autocompletion === 'fromCommand') {
+    parser.addCommand(
+      new Madlad.Command('generate-completion', 'Generate autocomplete script', {
+        name: 'generate-completion',
+        description: 'Generate autocomplete script',
+        run: async () => await generateAutocompletion(application.command),
+      }),
+    )
+    parser.addCommand(
+      new Madlad.Command('install-completion', 'Install autocomplete script', {
+        name: 'install-completion',
+        description: 'Install autocomplete script',
+        run: async () => await installAutocompletion(application.command),
+      }),
+    )
+  }
+}
+
+export async function maybeAutocomplete(argv: string[], parser: Madlad.Parser): Promise<void> {
   const index = argv.findIndex(x => x === AUTOCOMPLETE_FLAG)
 
   if (index === -1) {
@@ -23,7 +61,7 @@ export async function maybeAutocomplete(argv: string[], parser: Argv.Parser): Pr
   await autocomplete(parser, argv[index + 1], isFish)
 }
 
-async function autocomplete(parser: Argv.Parser, line: string, isFish: boolean): Promise<void> {
+async function autocomplete(parser: Madlad.Parser, line: string, isFish: boolean): Promise<void> {
   const suggestions = await parser.suggest(line, 1, isFish ? '' : ' ')
   for (const suggestion of suggestions) {
     process.stdout.write(suggestion + EOL)
@@ -72,29 +110,31 @@ async function getCompletionInfo(command: string, strictPath: boolean): Promise<
     handleNullShell()
   }
 
-  const shell = Argv.detectShell(shellString)
+  const shell = Madlad.detectShell(shellString)
 
   if (!shell) {
     handleUnsupportedShell(shellString)
   }
 
-  const expectedPaths = Argv.getShellPaths(shell)
+  const possibleShellPaths = Madlad.getShellPaths(shell)
   let path = null
 
-  for (const probablePath of expectedPaths) {
-    if (await fileExists(probablePath)) {
-      path = probablePath
-      break
+  if (possibleShellPaths) {
+    for (const possibleShellPath of possibleShellPaths) {
+      if (await fileExists(possibleShellPath)) {
+        path = possibleShellPath
+        break
+      }
     }
   }
 
-  if (!path && strictPath) {
-    handleMissingPath(shell, expectedPaths)
+  if (!path && strictPath && possibleShellPaths) {
+    handleMissingPath(shell, possibleShellPaths)
   }
 
-  const script = Argv.generateCompletion(command, shell)
+  const script = Madlad.generateCompletion(command, shell)
 
-  return { shell, path, expectedPaths, script }
+  return { shell, path, possibleShellPaths, script }
 }
 
 async function fileExists(path: string): Promise<boolean> {

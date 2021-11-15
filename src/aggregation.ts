@@ -8,8 +8,9 @@ export interface AggregationData {
 }
 
 export function findFirstAggregration(command: Command): AggregationData | null {
+  // eslint-disable-next-line guard-for-in
   for (const key in command) {
-    const aggregation = getAggregation(command, key as 'name')
+    const aggregation = getAggregation(command, key)
 
     if (aggregation) {
       return {

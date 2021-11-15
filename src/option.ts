@@ -1,37 +1,14 @@
+import * as Madlad from 'madlad'
 import { Command } from './command'
 
 const optionMetadataKey = Symbol('Option')
-
-/**
- * interface for `Option` decorator
- */
-export interface IOption<T = unknown> {
-  key: string
-  description: string
-  type?: string
-  alias?: string
-  required?: boolean | { when: string } | { unless: string }
-  default?: T
-  minimum?: number | bigint
-  maximum?: number | bigint
-  conflicts?: string
-  defaultDescription?: string
-  handler?: () => void
-  envKey?: string
-  length?: number
-  minimumLength?: number
-  maximumLength?: number
-  oddLength?: boolean
-  noErrors?: boolean
-  autocompletePath?: boolean
-}
 
 /**
  * Creates CLI Option based on the passed `options` and assigns its value to the property
  *
  * @param options IOption object, which defines the option of the command
  */
-export function Option(options: IOption): PropertyDecorator {
+export function Option(options: Madlad.Argument): PropertyDecorator {
   return Reflect.metadata(optionMetadataKey, options)
 }
 
@@ -41,7 +18,10 @@ export function Option(options: IOption): PropertyDecorator {
  * @param target Command instance
  * @param propertyKey Property of the command instance
  */
-export function getOption<T extends Command, K extends Extract<keyof T, string>>(target: T, propertyKey: K): IOption {
+export function getOption<T extends Command, K extends Extract<keyof T, string>>(
+  target: T,
+  propertyKey: K,
+): Madlad.Argument {
   return Reflect.getMetadata(optionMetadataKey, target, propertyKey)
 }
 
