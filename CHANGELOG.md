@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://www.github.com/furious-commander/furious-commander/compare/v1.6.0...v1.7.0) (2021-11-15)
+
+
+### Features
+
+* update parser version for array support ([#41](https://www.github.com/furious-commander/furious-commander/issues/41)) ([ac402c4](https://www.github.com/furious-commander/furious-commander/commit/ac402c4387cf742d5f8b44139b323304b97524e0))
+
 ## [1.6.0](https://www.github.com/furious-commander/furious-commander/compare/v1.5.0...v1.6.0) (2021-11-15)
 
 
