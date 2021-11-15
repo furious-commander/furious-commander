@@ -259,15 +259,19 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
   if (builder.runnable) {
     try {
       await builder.runnable.run()
-    } catch (error) {
+    } catch (error: unknown) {
       if (options.errorHandler) {
         options.errorHandler(error)
 
         return builder
       }
       printer.printHeading(printer.formatImportant(printer.getGenericErrorMessage()))
-      printer.print('')
-      printer.printError(error.message)
+
+      if (typeof error === 'object' && error) {
+        const message = Reflect.get(error, 'message')
+        printer.print('')
+        printer.printError(message)
+      }
     }
   }
 
