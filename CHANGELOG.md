@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://www.github.com/furious-commander/furious-commander/compare/v1.5.0...v1.6.0) (2021-11-15)
+
+
+### Features
+
+* change parser to madlad ([#35](https://www.github.com/furious-commander/furious-commander/issues/35)) ([3aacc6a](https://www.github.com/furious-commander/furious-commander/commit/3aacc6acb27552be54d764af00d780e74bd4f178))
+
 ## [1.5.0](https://www.github.com/furious-commander/furious-commander/compare/v1.4.0...v1.5.0) (2021-09-09)
 
 
