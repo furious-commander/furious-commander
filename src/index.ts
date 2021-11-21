@@ -1,5 +1,6 @@
 import * as Madlad from 'madlad'
 import { GroupCommand, LeafCommand } from 'madlad'
+import { Profile } from 'madlad/lib/type'
 import 'reflect-metadata'
 import { Aggregation, AggregationData, findFirstAggregration } from './aggregation'
 import { Application } from './application'
@@ -9,9 +10,10 @@ import { Command, InitedCommand, isGroupCommand } from './command'
 import { ExternalOption, getExternalOption, getOption, Option } from './option'
 import { createDefaultPrinter, Printer } from './printer'
 
-type Sourcemap = Record<string, 'default' | 'env' | 'explicit'>
+type Sourcemap = Record<string, 'default' | 'env' | 'explicit' | 'profile'>
 
 let sourcemap: Sourcemap = {}
+let profileErrors: string[] = []
 
 interface ICli {
   /**
@@ -38,6 +40,10 @@ interface ICli {
    * Called when an uncaught exception is thrown from the run method of the command
    */
   errorHandler?: (error: unknown) => void | Promise<void>
+  /**
+   * Apply customizable option preferences
+   */
+  profile?: Profile
 }
 
 interface CommandDecoratorData {
@@ -125,19 +131,24 @@ class CommandBuilder {
     this.initedCommands = []
   }
 
-  public async initCommandClasses(argv: string[], rootCommandClasses: Madlad.CommandConstructor[]): Promise<void> {
+  public async initCommandClasses(
+    argv: string[],
+    rootCommandClasses: Madlad.CommandConstructor[],
+    profile?: Profile,
+  ): Promise<void> {
     this.initedCommands = rootCommandClasses.map(x => this.instantiateCommandTree(x))
     this.initedCommands.forEach(x => this.declareCommand(this.parser, x))
 
     await maybeAutocomplete(argv, this.parser)
 
-    this.context = await this.parser.parse(argv)
+    this.context = await this.parser.parse(argv, profile)
 
     if (typeof this.context === 'string' || 'exitReason' in this.context || !this.context.command) {
       return
     }
 
     sourcemap = this.context.sourcemap
+    profileErrors = this.context.profileErrors
 
     const command = this.context.command.leafCommand
 
@@ -254,7 +265,7 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
     }
   }
   const builder = new CommandBuilder(parser)
-  await builder.initCommandClasses(testArguments || process.argv.slice(2), rootCommandClasses)
+  await builder.initCommandClasses(testArguments || process.argv.slice(2), rootCommandClasses, options.profile)
 
   if (builder.runnable) {
     try {
@@ -286,5 +297,6 @@ export type IArgument<T = unknown> = Madlad.Argument<T>
 export const Utils = {
   isGroupCommand,
   getSourcemap: (): Sourcemap => sourcemap,
+  getProfileErrors: (): string[] => profileErrors,
 }
 export default cli
