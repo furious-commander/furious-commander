@@ -272,7 +272,7 @@ export async function cli(options: ICli): Promise<CommandBuilder> {
         printer.print('')
         printer.printError(message)
       }
-      
+
       if (!process.exitCode) {
         process.exitCode = 1
       }
