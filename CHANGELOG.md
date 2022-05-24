@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.7.1](https://www.github.com/furious-commander/furious-commander/compare/v1.7.0...v1.7.1) (2022-05-24)
+
+
+### Bug Fixes
+
+* non-zero exit code for errors ([#47](https://www.github.com/furious-commander/furious-commander/issues/47)) ([a4075aa](https://www.github.com/furious-commander/furious-commander/commit/a4075aabe567e64044dd41484393d4e956309daa))
+
 ## [1.7.0](https://www.github.com/furious-commander/furious-commander/compare/v1.6.0...v1.7.0) (2021-11-15)
 
 
